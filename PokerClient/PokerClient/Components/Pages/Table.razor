@@ -1,0 +1,116 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Table</PageTitle>
+<div class="table-container">
+    
+    
+
+    <div class="player1-container">
+        <img class="pixelated table-image" src="images/table.png" alt="table">
+
+        <img class="pixelated table-card1-image" src=@tableCard1 alt="tablecard1">
+        <img class="pixelated table-card2-image" src=@tableCard2 alt="tablecard2">
+        <img class="pixelated table-card3-image" src=@tableCard3 alt="tablecard3">
+        <img class="pixelated table-card4-image" src=@tableCard4 alt="tablecard4">
+        <img class="pixelated table-card5-image" src=@tableCard5 alt="tablecard5">
+        
+        <img class="pixelated player1-card1-image" src=@player1Card1 alt="player1card1">
+        <img class="pixelated player1-card2-image" src=@player1Card2 alt="player1card2">
+
+        <img class="pixelated foldButton-image" src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold">
+        <img class="pixelated checkCallButton-image" src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall">
+        <img class="pixelated raiseButton-image" src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise">
+
+        <img class="pixelated player2-card1-image" src=@player2Card1 alt="player2card1">
+        <img class="pixelated player2-card2-image" src=@player2Card2 alt="player2card2">
+
+        <img class="pixelated player3-card1-image" src=@player3Card1 alt="player3card1">
+        <img class="pixelated player3-card2-image" src=@player3Card2 alt="player3card2">
+
+        <img class="pixelated player4-card1-image" src=@player4Card1 alt="player4card1">
+        <img class="pixelated player4-card2-image" src=@player4Card2 alt="player4card2">
+
+        <img class="pixelated player5-card1-image" src=@player5Card1 alt="player5card1">
+        <img class="pixelated player5-card2-image" src=@player5Card2 alt="player5card2">
+
+        <img class="pixelated player6-card1-image" src=@player6Card1 alt="player6card1">
+        <img class="pixelated player6-card2-image" src=@player6Card2 alt="player6card2">
+
+        <img class="pixelated player7-card1-image" src=@player7Card1 alt="player7card1">
+        <img class="pixelated player7-card2-image" src=@player7Card2 alt="player7card2">
+    </div>
+
+</div>
+@code
+{
+    private string tableCard1 = "images/cardFaces/default/10d.png";
+    private string tableCard2 = "images/cardFaces/default/11d.png";
+    private string tableCard3 = "images/cardFaces/default/12d.png";
+    private string tableCard4 = "images/cardFaces/default/13d.png";
+    private string tableCard5 = "images/cardFaces/default/14d.png";
+    
+    private string player1Card1 = "images/cardFaces/default/2d.png";
+    private string player1Card2 = "images/cardFaces/default/2s.png";
+    
+    private string buttonFold = "images/buttons/foldOff.png";
+    private string buttonCheckCall = "images/buttons/checkOff.png";
+    private string buttonRaise = "images/buttons/raiseOff.png";
+    
+    private string buttonFoldOff = "images/buttons/foldOff.png";
+    private string buttonCheckCallOff = "images/buttons/checkOff.png";
+    private string buttonRaiseOff = "images/buttons/raiseOff.png";
+    
+    private string buttonFoldOn = "images/buttons/foldOn.png";
+    private string buttonCheckCallOn = "images/buttons/checkOn.png";
+    private string buttonRaiseOn = "images/buttons/raiseOn.png";
+    
+    private string player2Card1 = "images/cardReverses/cat.png";
+    private string player2Card2 = "images/cardReverses/cat.png";
+    
+    private string player3Card1 = "images/cardReverses/skull.png";
+    private string player3Card2 = "images/cardReverses/skull.png";
+    
+    private string player4Card1 = "images/cardReverses/dottedRed.png";
+    private string player4Card2 = "images/cardReverses/dottedRed.png";
+    
+    private string player5Card1 = "images/cardReverses/szpont.png";
+    private string player5Card2 = "images/cardReverses/szpont.png";
+    
+    private string player6Card1 = "images/cardReverses/tetris.png";
+    private string player6Card2 = "images/cardReverses/tetris.png";
+    
+    private string player7Card1 = "images/cardReverses/schizo.png";
+    private string player7Card2 = "images/cardReverses/schizo.png";
+    
+    
+    private void OverFold()
+    {
+        buttonFold = buttonFoldOn;
+    }
+
+    private void OutFold()
+    {
+        buttonFold = buttonFoldOff;
+    }
+
+    private void OverCheckCall()
+    {
+        buttonCheckCall = buttonCheckCallOn;
+    }
+
+    private void OutCheckCall()
+    {
+        buttonCheckCall = buttonCheckCallOff;
+    }
+
+    private void OverRaise()
+    {
+        buttonRaise = buttonRaiseOn;
+    }
+    
+    private void OutRaise()
+    {
+        buttonRaise = buttonRaiseOff;
+    }
+}
