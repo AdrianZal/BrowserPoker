@@ -18,9 +18,9 @@
         <img class="pixelated player1-card1-image" src=@player1Card1 alt="player1card1">
         <img class="pixelated player1-card2-image" src=@player1Card2 alt="player1card2">
 
-        <img class="pixelated foldButton-image" src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold">
-        <img class="pixelated checkCallButton-image" src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall">
-        <img class="pixelated raiseButton-image" src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise">
+        <img class="pixelated foldButton-image" src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold" @onmousedown="ClickFold" @onmouseup="OverFold">
+        <img class="pixelated checkCallButton-image" src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall" @onmousedown="ClickCheckCall" @onmouseup="OverCheckCall">
+        <img class="pixelated raiseButton-image" src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise" @onmousedown="ClickRaise" @onmouseup="OverRaise">
 
         <img class="pixelated player2-card1-image" src=@player2Card1 alt="player2card1">
         <img class="pixelated player2-card2-image" src=@player2Card2 alt="player2card2">
@@ -65,6 +65,10 @@
     private string buttonCheckCallOn = "images/buttons/checkOn.png";
     private string buttonRaiseOn = "images/buttons/raiseOn.png";
     
+    private string buttonFoldClick = "images/buttons/foldClick.png";
+    private string buttonCheckCallClick = "images/buttons/checkClick.png";
+    private string buttonRaiseClick = "images/buttons/raiseClick.png";
+    
     private string player2Card1 = "images/cardReverses/cat.png";
     private string player2Card2 = "images/cardReverses/cat.png";
     
@@ -93,6 +97,11 @@
     {
         buttonFold = buttonFoldOff;
     }
+    
+    private void ClickFold()
+    {
+        buttonFold = buttonFoldClick;
+    }
 
     private void OverCheckCall()
     {
@@ -102,6 +111,11 @@
     private void OutCheckCall()
     {
         buttonCheckCall = buttonCheckCallOff;
+    }
+    
+    private void ClickCheckCall()
+    {
+        buttonCheckCall = buttonCheckCallClick;
     }
 
     private void OverRaise()
@@ -113,4 +127,11 @@
     {
         buttonRaise = buttonRaiseOff;
     }
+    
+    private void ClickRaise()
+    {
+        buttonRaise = buttonRaiseClick;
+    }
+
+    
 }
