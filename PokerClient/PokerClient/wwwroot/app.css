@@ -60,9 +60,6 @@ h1:focus {
 }
 body{
     background-color: #4d5154;
-}
-
-img {
     -webkit-user-drag: none;
     -khtml-user-drag: none;
     -moz-user-drag: none;
@@ -75,18 +72,20 @@ img {
     user-select: none;
 }
 
-.pixelated {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+img{
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }
 
-.table-image {
-    height: 80vh;
-    width: auto;
-}
-
-.table-container {
+.table-container{
     height: 80vh;
     width: auto;
     display: flex;
@@ -94,169 +93,128 @@ img {
     align-items: center;
 }
 
-.table-card1-image{
-    position: absolute;
-    bottom: 35%;
-    left: 28%;
-    transform: translateX(-50%);
-    width: 10%;
-}
-.table-card2-image{
-    position: absolute;
-    bottom: 35%;
-    left: 39%;
-    transform: translateX(-50%);
-    width: 10%;
-}
-.table-card3-image{
-    position: absolute;
-    bottom: 35%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 10%;
-}
-.table-card4-image{
-    position: absolute;
-    bottom: 35%;
-    left: 61%;
-    transform: translateX(-50%);
-    width: 10%;
-}
-.table-card5-image{
-    position: absolute;
-    bottom: 35%;
-    left: 72%;
-    transform: translateX(-50%);
-    width: 10%;
-}
-
-.player1-container {
+.player1-container{
     position: relative;
     display: inline-block;
 }
 
-.player1-card1-image {
-    position: absolute;
-    bottom: -5%;   
-    left: 44%;   
-    transform: translateX(-50%);
-    width: 12%;
+.pixelated{
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    outline: none;
+    border: none;
+    background: none;
 }
-.player1-card2-image {
-    position: absolute;
-    bottom: -5%;
-    left: 56%;
-    transform: translateX(-50%);
-    width: 12%;
+
+.table{
+    height: 80vh;
+    width: auto;
 }
-.foldButton-image{
+
+.card{
     position: absolute;
+    transform: translateX(-50%);
+    width: 10%;
+}
+
+.button-image{
+    position: absolute;
+    transform: translateX(-50%);
     bottom: -20%;
-    left: 25%;
-    transform: translateX(-50%);
-    width: 20%;
-}
-.checkCallButton-image{
-    position: absolute;
-    bottom: -20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20%;
-}
-.raiseButton-image{
-    position: absolute;
-    bottom: -20%;
-    left: 75%;
-    transform: translateX(-50%);
     width: 20%;
 }
 
-.player2-card1-image {
-    position: absolute;
+.foldButton{
+    left: 25%;
+}
+.checkCallButton{
+    left: 50%;
+}
+.raiseButton{
+    left: 75%;
+}
+
+.table-card{
+    bottom: 35%;
+}
+
+.table-card1{
+    left: 28%;
+}
+.table-card2{
+    left: 39%;
+}
+.table-card3{
+    left: 50%;
+}
+.table-card4{
+    left: 61%;
+}
+.table-card5{
+    left: 72%;
+}
+
+
+.player1-card1{
+    bottom: -5%;   
+    left: 45%;
+}
+.player1-card2 {
+    bottom: -5%;
+    left: 55%;
+}
+
+.player2-card1{
     bottom: 10%;
     left: 7%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player2-card2-image {
-    position: absolute;
+.player2-card2{
     bottom: 10%;
     left: 17%;
-    transform: translateX(-50%);
-    width: 10%;
 }
 
-.player3-card1-image {
-    position: absolute;
+.player3-card1{
     bottom: 10%;
     left: 83%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player3-card2-image {
-    position: absolute;
+.player3-card2{
     bottom: 10%;
     left: 93%;
-    transform: translateX(-50%);
-    width: 10%;
 }
 
-.player4-card1-image {
-    position: absolute;
+.player4-card1{
     bottom: 40%;
     left: -5%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player4-card2-image {
-    position: absolute;
+.player4-card2{
     bottom: 40%;
     left: 5%;
-    transform: translateX(-50%);
-    width: 10%;
 }
 
-.player5-card1-image {
-    position: absolute;
+.player5-card1{
     bottom: 40%;
     left: 95%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player5-card2-image {
-    position: absolute;
+.player5-card2{
     bottom: 40%;
     left: 105%;
-    transform: translateX(-50%);
-    width: 10%;
 }
 
-.player6-card1-image {
-    position: absolute;
+.player6-card1{
     bottom: 70%;
     left: 7%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player6-card2-image {
-    position: absolute;
+.player6-card2{
     bottom: 70%;
     left: 17%;
-    transform: translateX(-50%);
-    width: 10%;
 }
 
-.player7-card1-image {
-    position: absolute;
+.player7-card1{
     bottom: 70%;
     left: 83%;
-    transform: translateX(-50%);
-    width: 10%;
 }
-.player7-card2-image {
-    position: absolute;
+.player7-card2{
     bottom: 70%;
     left: 93%;
-    transform: translateX(-50%);
-    width: 10%;
 }

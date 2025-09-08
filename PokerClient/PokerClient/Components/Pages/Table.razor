@@ -4,54 +4,79 @@
 <PageTitle>Table</PageTitle>
 <div class="table-container">
     
-    
-
     <div class="player1-container">
-        <img class="pixelated table-image" src="images/table.png" alt="table">
-
-        <img class="pixelated table-card1-image" src=@tableCard1 alt="tablecard1">
-        <img class="pixelated table-card2-image" src=@tableCard2 alt="tablecard2">
-        <img class="pixelated table-card3-image" src=@tableCard3 alt="tablecard3">
-        <img class="pixelated table-card4-image" src=@tableCard4 alt="tablecard4">
-        <img class="pixelated table-card5-image" src=@tableCard5 alt="tablecard5">
+        <img class="pixelated table" src="images/tables/basic.png" alt="table">
         
-        <img class="pixelated player1-card1-image" src=@player1Card1 alt="player1card1">
-        <img class="pixelated player1-card2-image" src=@player1Card2 alt="player1card2">
-
-        <img class="pixelated foldButton-image" src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold" @onmousedown="ClickFold" @onmouseup="OverFold">
-        <img class="pixelated checkCallButton-image" src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall" @onmousedown="ClickCheckCall" @onmouseup="OverCheckCall">
-        <img class="pixelated raiseButton-image" src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise" @onmousedown="ClickRaise" @onmouseup="OverRaise">
-
-        <img class="pixelated player2-card1-image" src=@player2Card1 alt="player2card1">
-        <img class="pixelated player2-card2-image" src=@player2Card2 alt="player2card2">
-
-        <img class="pixelated player3-card1-image" src=@player3Card1 alt="player3card1">
-        <img class="pixelated player3-card2-image" src=@player3Card2 alt="player3card2">
-
-        <img class="pixelated player4-card1-image" src=@player4Card1 alt="player4card1">
-        <img class="pixelated player4-card2-image" src=@player4Card2 alt="player4card2">
-
-        <img class="pixelated player5-card1-image" src=@player5Card1 alt="player5card1">
-        <img class="pixelated player5-card2-image" src=@player5Card2 alt="player5card2">
-
-        <img class="pixelated player6-card1-image" src=@player6Card1 alt="player6card1">
-        <img class="pixelated player6-card2-image" src=@player6Card2 alt="player6card2">
-
-        <img class="pixelated player7-card1-image" src=@player7Card1 alt="player7card1">
-        <img class="pixelated player7-card2-image" src=@player7Card2 alt="player7card2">
+        @for (int i = 0; i < tableCards.Count; i++)
+        {
+            <img src="@tableCards[i]"
+                 alt="tableCard"
+                 class=@($"pixelated card table-card table-card{i+1}")>
+        }
+        
+        @for (int i = 0; i < playerCards.Count/2; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                <img src="@playerCards[2*i+j]"
+                     alt="playerCard"
+                     class=@($"pixelated card player{i+1}-card{j+1}")>
+            }
+        }
+        
+        <img class=@classFoldButton src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold" @onmousedown="ClickFold" @onmouseup="OverFold">
+        <img class=@classCheckCallButton src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall" @onmousedown="ClickCheckCall" @onmouseup="OverCheckCall">
+        <img class=@classRaiseButton src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise" @onmousedown="ClickRaise" @onmouseup="OverRaise">
+        
     </div>
 
 </div>
+
 @code
 {
+    
     private string tableCard1 = "images/cardFaces/default/10d.png";
     private string tableCard2 = "images/cardFaces/default/11d.png";
     private string tableCard3 = "images/cardFaces/default/12d.png";
     private string tableCard4 = "images/cardFaces/default/13d.png";
     private string tableCard5 = "images/cardFaces/default/14d.png";
     
-    private string player1Card1 = "images/cardFaces/default/2d.png";
-    private string player1Card2 = "images/cardFaces/default/2s.png";
+    private List<string> tableCards = new()
+    {
+        "images/cardFaces/default/10d.png",
+        "images/cardFaces/default/11d.png",
+        "images/cardFaces/default/12d.png",
+        "images/cardFaces/default/13d.png",
+        "images/cardFaces/default/14d.png"
+    };
+    
+    private List<string> playerCards = new()
+    {
+        "images/cardFaces/default/2d.png",
+        "images/cardFaces/default/2s.png",
+        
+        "images/cardReverses/cat.png",
+        "images/cardReverses/cat.png",
+        
+        "images/cardReverses/skull.png",
+        "images/cardReverses/skull.png",
+        
+        "images/cardReverses/dottedRed.png",
+        "images/cardReverses/dottedRed.png",
+        
+        "images/cardReverses/szpont.png",
+        "images/cardReverses/szpont.png",
+        
+        "images/cardReverses/tetris.png",
+        "images/cardReverses/tetris.png",
+        
+        "images/cardReverses/schizo.png",
+        "images/cardReverses/schizo.png"
+    };
+    
+    private string classFoldButton = "pixelated button-image foldButton";
+    private string classCheckCallButton = "pixelated button-image checkCallButton";
+    private string classRaiseButton = "pixelated button-image raiseButton";
     
     private string buttonFold = "images/buttons/foldOff.png";
     private string buttonCheckCall = "images/buttons/checkOff.png";
@@ -68,24 +93,6 @@
     private string buttonFoldClick = "images/buttons/foldClick.png";
     private string buttonCheckCallClick = "images/buttons/checkClick.png";
     private string buttonRaiseClick = "images/buttons/raiseClick.png";
-    
-    private string player2Card1 = "images/cardReverses/cat.png";
-    private string player2Card2 = "images/cardReverses/cat.png";
-    
-    private string player3Card1 = "images/cardReverses/skull.png";
-    private string player3Card2 = "images/cardReverses/skull.png";
-    
-    private string player4Card1 = "images/cardReverses/dottedRed.png";
-    private string player4Card2 = "images/cardReverses/dottedRed.png";
-    
-    private string player5Card1 = "images/cardReverses/szpont.png";
-    private string player5Card2 = "images/cardReverses/szpont.png";
-    
-    private string player6Card1 = "images/cardReverses/tetris.png";
-    private string player6Card2 = "images/cardReverses/tetris.png";
-    
-    private string player7Card1 = "images/cardReverses/schizo.png";
-    private string player7Card2 = "images/cardReverses/schizo.png";
     
     
     private void OverFold()
@@ -132,6 +139,4 @@
     {
         buttonRaise = buttonRaiseClick;
     }
-
-    
 }
