@@ -24,9 +24,9 @@
             }
         }
         
-        <img class=@classFoldButton src=@buttonFold alt="fold" @onmouseover="OverFold" @onmouseout="OutFold" @onmousedown="ClickFold" @onmouseup="OverFold">
-        <img class=@classCheckCallButton src=@buttonCheckCall alt="check/call" @onmouseover="OverCheckCall" @onmouseout="OutCheckCall" @onmousedown="ClickCheckCall" @onmouseup="OverCheckCall">
-        <img class=@classRaiseButton src=@buttonRaise alt="raise" @onmouseover="OverRaise" @onmouseout="OutRaise" @onmousedown="ClickRaise" @onmouseup="OverRaise">
+        <img class=@classFoldButton src=@buttonFold alt="fold" @onmouseover="() => Over(ButtonType.Fold)" @onmouseout="() => Out(ButtonType.Fold)" @onmousedown="() => Click(ButtonType.Fold)" @onmouseup="() => Over(ButtonType.Fold)">
+        <img class=@classCheckCallButton src=@buttonCheckCall alt="check/call" @onmouseover="() => Over(ButtonType.CheckCall)" @onmouseout="() => Out(ButtonType.CheckCall)" @onmousedown="() => Click(ButtonType.CheckCall)" @onmouseup="() => Over(ButtonType.CheckCall)">
+        <img class=@classRaiseButton src=@buttonRaise alt="raise" @onmouseover="() => Over(ButtonType.Raise)" @onmouseout="() => Out(ButtonType.Raise)" @onmousedown="() => Click(ButtonType.Raise)" @onmouseup="() => Over(ButtonType.Raise)">
         
     </div>
 
@@ -34,6 +34,21 @@
 
 @code
 {
+    private enum CheckOrCall
+    {
+        Check,
+        Call
+    }
+    
+    private enum ButtonType
+    {
+        Fold,
+        CheckCall,
+        Raise
+    }
+
+    private CheckOrCall checkOrCall = CheckOrCall.Check;
+    
     
     private string tableCard1 = "images/cardFaces/default/10d.png";
     private string tableCard2 = "images/cardFaces/default/11d.png";
@@ -95,48 +110,51 @@
     private string buttonRaiseClick = "images/buttons/raiseClick.png";
     
     
-    private void OverFold()
+    private void Over(ButtonType type)
     {
-        buttonFold = buttonFoldOn;
+        switch (type)
+        {
+            case ButtonType.Fold:
+                buttonFold = buttonFoldOn;
+                break;
+            case ButtonType.CheckCall:
+                buttonCheckCall = buttonCheckCallOn;
+                break;
+            case ButtonType.Raise:
+                buttonRaise = buttonRaiseOn;
+                break;
+        }
     }
 
-    private void OutFold()
+    private void Out(ButtonType type)
     {
-        buttonFold = buttonFoldOff;
+        switch (type)
+        {
+            case ButtonType.Fold:
+                buttonFold = buttonFoldOff;
+                break;
+            case ButtonType.CheckCall:
+                buttonCheckCall = buttonCheckCallOff;
+                break;
+            case ButtonType.Raise:
+                buttonRaise = buttonRaiseOff;
+                break;
+        }
     }
     
-    private void ClickFold()
+    private void Click(ButtonType type)
     {
-        buttonFold = buttonFoldClick;
-    }
-
-    private void OverCheckCall()
-    {
-        buttonCheckCall = buttonCheckCallOn;
-    }
-
-    private void OutCheckCall()
-    {
-        buttonCheckCall = buttonCheckCallOff;
-    }
-    
-    private void ClickCheckCall()
-    {
-        buttonCheckCall = buttonCheckCallClick;
-    }
-
-    private void OverRaise()
-    {
-        buttonRaise = buttonRaiseOn;
-    }
-    
-    private void OutRaise()
-    {
-        buttonRaise = buttonRaiseOff;
-    }
-    
-    private void ClickRaise()
-    {
-        buttonRaise = buttonRaiseClick;
+        switch (type)
+        {
+            case ButtonType.Fold:
+                buttonFold = buttonFoldClick;
+                break;
+            case ButtonType.CheckCall:
+                buttonCheckCall = buttonCheckCallClick;
+                break;
+            case ButtonType.Raise:
+                buttonRaise = buttonRaiseClick;
+                break;
+        }
     }
 }

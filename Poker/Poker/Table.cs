@@ -55,25 +55,25 @@ public class Table
         if (players.Count < 2)
             return;
         Deal();
-        //ShowTableCards();
+        ShowTableCards();
         var stillOn =BettingRound(true);
         
         Flop();
-        //ShowTableCards();
+        ShowTableCards();
         if (stillOn)
         {
             stillOn = BettingRound(false);
         }
         
         DrawTableCard();
-        //ShowTableCards();
+        ShowTableCards();
         if (stillOn)
         {
             stillOn = BettingRound(false);
         }
         
         DrawTableCard();
-        //ShowTableCards();
+        ShowTableCards();
         if (stillOn)
         {
             BettingRound(false);
