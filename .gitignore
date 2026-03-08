@@ -417,10 +417,10 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-.db
-.db-shm
-.db-wal
+*.db
+*.db-shm
+*.db-wal
 
-.ps1
+*.ps1
 
 *.json
