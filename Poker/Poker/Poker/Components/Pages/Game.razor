@@ -66,7 +66,7 @@ else
                     if (gameState.CurrentPlayer != null && gameState.Players[i].name == gameState.CurrentPlayer.name)
                     {
                         <div class="time @($"time{positions[i]}")">
-                            <img src="@($"images/time/{time}.png")" alt="time" />
+                            <img src="@($"images/time/{turnTime}.png")" alt="time" />
                         </div>
                     }
 
@@ -185,8 +185,15 @@ else
 					    }
                     </div>
                 }
-               
-                
+
+
+                <!-- round timer -->
+                @if(gameState.Stage == Poker.Game.Table.GameStage.GameOver)
+                {
+                    <div class="round-timer">
+                        <img src="@($"images/time/{roundTime}.png")" alt="time" />
+                    </div>
+                }
 
                 <!-- table card 1 -->
                 <div style="position: absolute; bottom: 37%; left: 31%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
@@ -247,9 +254,17 @@ else
             }
 
 
-            <div class="hide-button">
+            <div class="side-button side-button-hide">
                 <img src=@hideButtonImage alt="Hide/Show"
-                     @onpointerdown="() => ClickButton(Button.Hide)">
+                    @onpointerdown="() => ClickButton(Button.Hide)">
+            </div>
+
+            <div class="side-button side-button-code">
+                <img src=@codeButtonImage alt="Code" 
+                     @onpointerleave=" ()=> OffButton(Button.Code)"
+                     @onpointerenter="() => OverButton(Button.Code)"
+                     @onpointerdown="() => ClickButton(Button.Code)"
+                     @onpointerup="() => OverButton(Button.Code)">
             </div>
 
             @if (gameState != null && gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses[currentUserName] == Poker.Game.Table.PlayerStatus.Folded)
@@ -299,7 +314,7 @@ else
                     <div style="position: relative; width: 8%; display: inline-block;">
                         <img src="images/buttons/inputField.png" alt="InputField" style="width: 100%; height: auto; display: block;" />
 
-						<input class="no-arrows" type="number" @bind="raiseAmount"
+                        <input class="no-arrows" type="number" @bind="raiseAmount" @bind:event="oninput" @onkeydown="HandleInputKeyDown"
                                style="position: absolute;
                                   top: 50%;
                                   left: 50%;
@@ -341,36 +356,16 @@ else
     private bool hidden = false;
     private bool rising = false;
     private int _raiseAmount = 0;
+
     private int raiseAmount
     {
         get => _raiseAmount;
         set
         {
-            if (gameState != null)
-            {
-                var myPlayer = gameState.Players.First(p => p.name == currentUserName);
-                if (myPlayer != null)
-                {
-                    int myBalance = myPlayer.tableBalance;
-
-                    if (value > myBalance - (gameState.ToCall - gameState.PlayerBets[currentUserName]))
-                    {
-                        _raiseAmount = myBalance - (gameState.ToCall - gameState.PlayerBets[currentUserName]);
-                    }
-                    else if (value < gameState.MinRaise && myBalance > gameState.MinRaise)
-                    {
-                        _raiseAmount = gameState.MinRaise;
-                    }
-                    else
-                    {
-                        _raiseAmount = value;
-                    }
-                    return;
-                }
-            }
             _raiseAmount = value;
         }
     }
+
     private int plusMinusStep = 0;
 
     private string dealerImage = "images/dealer/dealer.png";
@@ -380,6 +375,7 @@ else
     private string raiseButtonImage = "images/buttons/raiseOff.png";
     private string foldButtonImage = "images/buttons/foldOff.png";
     private string hideButtonImage = "images/buttons/shown.png";
+    private string codeButtonImage = "images/buttons/codeOff.png";
 
     private string cancelButtonImage = "images/buttons/cancelOff.png";
     private string minusButtonImage = "images/buttons/minusOff.png";
@@ -389,7 +385,10 @@ else
     private string showButtonImage = "images/buttons/showOff.png";
 
     private System.Timers.Timer? _uiTimer;
-    private int time = 5;
+    private int turnTime = 5;
+
+    private System.Timers.Timer? _roundTimer;
+    private int roundTime = 5;
 
     private enum Button
     {
@@ -402,7 +401,8 @@ else
         Plus,
         Ok,
         Show,
-        Hide
+        Hide,
+        Code
     }
 
     private void OffButton(Button button)
@@ -443,6 +443,9 @@ else
             case Button.Show:
                 showButtonImage = "images/buttons/showOff.png";
                 break;
+            case Button.Code:
+                codeButtonImage = "images/buttons/codeOff.png";
+				break;
         }
     }
 
@@ -483,6 +486,9 @@ else
                 break;
             case Button.Show:
                 showButtonImage = "images/buttons/showOn.png";
+                break;
+            case Button.Code:
+                codeButtonImage = "images/buttons/codeOn.png";
                 break;
         }
     }
@@ -601,6 +607,19 @@ else
                 hideButtonImage = hidden ? "images/buttons/shown.png" : "images/buttons/hidden.png";
                 hidden = !hidden;
                 break;
+            case Button.Code:
+                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
+                codeButtonImage = "images/buttons/codeClick.png";
+                JS.InvokeVoidAsync("copyToClipboard", JoinCode);
+                break;
+        }
+    }
+
+    private void HandleInputKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ClickButton(Button.Ok);
         }
     }
 
@@ -609,14 +628,28 @@ else
         _uiTimer = new System.Timers.Timer(3000);
         _uiTimer.Elapsed += (s, e) =>
         {
-            if (time > 1)
+            if (turnTime > 1)
             {
-                time--;
+                turnTime--;
                 InvokeAsync(StateHasChanged);
             }
             else
             {
                 _uiTimer.Stop();
+            }
+        };
+
+        _roundTimer = new System.Timers.Timer(1600);
+        _roundTimer.Elapsed += (s, e) =>
+        {
+            if (roundTime > 1)
+            {
+                roundTime--;
+                InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                _roundTimer.Stop();
             }
         };
 
@@ -653,14 +686,38 @@ else
 
         hubConnection.On<GameStateDto>("UpdateState", (state) =>
         {
+            bool stageChanged = gameState?.Stage != state.Stage;
+            bool isGameOver = state.Stage == Poker.Game.Table.GameStage.GameOver;
+
+            if (stageChanged && isGameOver)
+            {
+                roundTime = 5;
+                _roundTimer?.Stop();
+                _roundTimer?.Start();
+            }
+            else if (!isGameOver)
+            {
+                _roundTimer?.Stop();
+            }
+
             if (state.CurrentPlayer != null)
             {
                 bool playerChanged = gameState?.CurrentPlayer?.name != state.CurrentPlayer.name;
-                bool stageChanged = gameState?.Stage != state.Stage;
 
                 if (playerChanged || stageChanged)
                 {
-                    time = 5;
+                    if(state.Stage == Poker.Game.Table.GameStage.GameOver)
+                    {
+                        roundTime = 5;
+                        _roundTimer?.Stop();
+                        _roundTimer?.Start();
+                    }
+                    else
+                    {
+                        _roundTimer?.Stop();
+                    }
+
+                    turnTime = 5;
                     _uiTimer?.Stop();
                     _uiTimer?.Start();
 

@@ -422,3 +422,5 @@ FodyWeavers.xsd
 .db-wal
 
 .ps1
+
+*.json
