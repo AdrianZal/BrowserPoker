@@ -1,8 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Tiny5:wght@400;700&display=swap');
+@font-face {
+    font-family: 'Tiny5';
+    src: url('Fonts/Tiny5/Tiny5-Regular.ttf') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
 
 html, body {
     font-family: 'Tiny5', system-ui;
     background-color: gray;
+}
+h1 {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 * {
@@ -183,59 +194,92 @@ h1 {
     top: 22%;
     left: 20%;
 }
-.name-top-right {
+.name {
     position: absolute;
     display: flex;
     justify-content: center;
+}
+    .name h1 {
+        padding-left: 0.3vw;
+        padding-right: 0.3vw;
+        border: 0.05vw solid white;
+        border-radius: 0.3vw;
+        background-color: black;
+    }
+.name-top-right {
     top: 27%;
     right: 11%;
     transform: translate(50%, 50%);
 }
 .name-mid-right {
-    position: absolute;
-    display: flex;
-    justify-content: center;
     top: 57%;
     right: 1%;
     transform: translate(50%, 50%);
 }
 .name-bot-right {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    bottom: 9%;
+    bottom: 8.5%;
     right: 11%;
     transform: translate(50%, -50%);
 }
 .name-mid {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    bottom: 6%;
+    bottom: 5.5%;
     left: 50%;
     transform: translate(-50%, 50%);
 }
 .name-bot-left {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    bottom: 9%;
+    bottom: 8.5%;
     left: 11%;
     transform: translate(-50%, -50%);
 }
 .name-mid-left {
-    position: absolute;
-    display: flex;
-    justify-content: center;
     top: 57%;
     left: 1%;
     transform: translate(-50%, 50%);
 }
 .name-top-left {
+    top: 27%;
+    left: 11%;
+    transform: translate(-50%, 50%);
+}
+
+.time {
     position: absolute;
     display: flex;
     justify-content: center;
-    top: 27%;
+    height: 3%;
+}
+.time-top-right {
+    top: 10%;
+    right: 11%;
+    transform: translate(50%, 50%);
+}
+.time-mid-right {
+    top: 40%;
+    right: 1%;
+    transform: translate(50%, 50%);
+}
+.time-bot-right {
+    bottom: 28%;
+    right: 11%;
+    transform: translate(50%, -50%);
+}
+.time-mid {
+    bottom: 24%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+}
+.time-bot-left {
+    bottom: 28%;
+    left: 11%;
+    transform: translate(-50%, -50%);
+}
+.time-mid-left {
+    top: 40%;
+    left: 1%;
+    transform: translate(-50%, 50%);
+}
+.time-top-left {
+    top: 10%;
     left: 11%;
     transform: translate(-50%, 50%);
 }
@@ -246,7 +290,7 @@ h1 {
     flex-direction: column;
     justify-content: center;
     text-align: center;
-    top: 8%;
+    top: 9%;
     right: 50%;
     transform: translateX(50%);
 }
@@ -259,48 +303,48 @@ h1 {
     display: flex;
     justify-content: center;
 }
-    .balance h1{
+    .balance h1 {
         color: yellow;
     }
 
 .balance-top-right {
-    top: 30.5%;
+    top: 31%;
     right: 11%;
     transform: translate(50%, 50%);
 }
 
 .balance-mid-right {
-    top: 60.5%;
+    top: 61%;
     right: 1%;
     transform: translate(50%, 50%);
 }
 
 .balance-bot-right {
-    bottom: 5.5%;
+    bottom: 5%;
     right: 11%;
     transform: translate(50%, -50%);
 }
 
 .balance-mid {
-    bottom: 2.5%;
+    bottom: 1.5%;
     left: 50%;
     transform: translate(-50%, 50%);
 }
 
 .balance-bot-left {
-    bottom: 5.5%;
+    bottom: 5%;
     left: 11%;
     transform: translate(-50%, -50%);
 }
 
 .balance-mid-left {
-    top: 60.5%;
+    top: 61%;
     left: 1%;
     transform: translate(-50%, 50%);
 }
 
 .balance-top-left {
-    top: 30.5%;
+    top: 31%;
     left: 11%;
     transform: translate(-50%, 50%);
 }
@@ -337,8 +381,7 @@ h1 {
     display: flex;
     justify-content: center;
     bottom: 22%;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 55%;
 }
 .bet-bot-left {
     position: absolute;
@@ -404,7 +447,7 @@ h1 {
 
 .skins-container {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     column-gap: 1%;
     row-gap: 6%;
     justify-items: center;
@@ -423,7 +466,7 @@ h1 {
     gap: 0.5vw;
 }
     .skin-card img {
-        width: 15vw;
+        width: 100%;
         height: auto;
         display: block;
     }
@@ -466,4 +509,46 @@ h1 {
         height: auto;
         margin: 0;
         padding: 0;
+    }
+
+
+.case-container {
+    position: absolute;
+    display: flex;
+    flex-direction: column; /* Ustawia elementy w pionie */
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+}
+
+    .case-container img {
+        height: 60vh; /* Zmniejszono nieco, aby dwa obrazy zmieœci³y siê bez przewijania */
+        width: auto;
+        /* Usuwamy transform: translateY(-30%), poniewa¿ flex-direction: column 
+       lepiej poradzi sobie z roz³o¿eniem elementów */
+        margin: 10px 0; /* Dodaje lekki odstêp miêdzy obrazkami */
+    }
+    .case-container h1 {
+        font-size: 3vh;
+    }
+
+.dealer {
+    position: absolute;
+    display: flex;
+    top: 0;
+    left: 50%;
+    width: 5%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 0;
+    z-index: 9999;
+}
+    .dealer img {
+        width: 100%;
+        height: auto;
     }

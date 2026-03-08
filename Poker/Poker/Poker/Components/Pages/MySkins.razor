@@ -26,13 +26,15 @@ else
 
                 @if (skin.Value)
                 {
-                    <button class="equip-button" disabled>Equipped</button>
+                    <img style="width: 50%" src="images/buttons/usingOff.png" alt="Using" />
                 }
                 else
                 {
-                    <button class="equip-button" @onclick="() => HandleEquip(skin.Key)">
-                        Equip
-                    </button>
+                    <img style="width: 50%" src="@buttonImages[skin.Key]" alt="Use"
+                         @onpointerleave="() => OffButton(skin.Key)"
+                         @onpointerenter="() => OverButton(skin.Key)"
+                         @onpointerdown="() => HandleEquip(skin.Key)"
+                         @onpointerup="() => OverButton(skin.Key)">
                 }
             </div>
         }
@@ -42,6 +44,7 @@ else
 @code {
     private string currentUserName;
     OwnedSkinsDTO? skins;
+    private Dictionary<string, string>? buttonImages;
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,16 +52,47 @@ else
 
         if (string.IsNullOrEmpty(currentUserName))
         {
-			Navigation.NavigateTo("/menu");
+            Navigation.NavigateTo("/menu");
             return;
-		}
-        skins = await UtilService.GetOwnedSkinsAsync(currentUserName);
+        }
+        await SetSkins();
     }
 
     private async Task HandleEquip(string fileName)
     {
+        ClickButton(fileName);
+
         await UtilService.ChangeEquippedSkinAsync(currentUserName, fileName);
 
+		await SetSkins();
+    }
+
+    private async Task SetSkins()
+    {
         skins = await UtilService.GetOwnedSkinsAsync(currentUserName);
+		buttonImages = new Dictionary<string, string>();
+        foreach (var skin in skins.Skins)
+        {
+            if (!skin.Value)
+            {
+				buttonImages.Add(skin.Key, "images/buttons/useOff.png");
+            }
+		}
+    }
+
+
+    private void OffButton(string fileName)
+    {
+        buttonImages[fileName] = "images/buttons/useOff.png";
+    }
+
+    private void OverButton(string fileName)
+    {
+        buttonImages[fileName] = "images/buttons/useOn.png";
+    }
+
+    private void ClickButton(string fileName)
+    {
+        buttonImages[fileName] = "images/buttons/useClick.png";
     }
 }

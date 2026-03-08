@@ -49,6 +49,10 @@
                 MY SKINS
             </button>
 
+            <button class="btn btn-primary fs-5 py-2" @onclick="() => HandleGoToMyCases()">
+				MY PACKS (@cases)
+			</button>
+
             <form method="post" action="api/auth/logout">
                 <AntiforgeryToken />
                 <button type="submit" class="btn btn-outline-danger w-100 fs-5 py-2">
@@ -64,8 +68,9 @@
     private bool tableNotExist = false;
     private bool tableIsFull = false;
     private string joinCode = string.Empty;
-	private string? currentUserName;
-	private int balance = 0;
+    private string? currentUserName;
+    private int balance = 0;
+    private int cases = 0;
 
 
     protected override async Task OnInitializedAsync()
@@ -75,6 +80,7 @@
         if (!string.IsNullOrEmpty(currentUserName))
         {
             balance = await UtilService.GetBalanceAsync(currentUserName);
+            cases = await UtilService.GetPlayerCasesCount(currentUserName);
         }
     }
 
@@ -121,4 +127,9 @@
     {
         Navigation.NavigateTo("/myskins");
     }
+
+    private void HandleGoToMyCases()
+    {
+        Navigation.NavigateTo("/mypacks");
+	}
 }

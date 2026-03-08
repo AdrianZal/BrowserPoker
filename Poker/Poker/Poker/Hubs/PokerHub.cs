@@ -1,7 +1,9 @@
-﻿using System.Security.Claims;
+﻿using System.Numerics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Poker.Game;
 using Poker.Models;
 
 
@@ -143,10 +145,14 @@ namespace PokerServer.Hubs
             var table = gameService.GetTableByPlayer(playerName);
             if (table == null) throw new HubException("Table not found.");
             table.PlayerAction(
-                table.playersInGame.First(p => p.name == playerName),
+                table.players.First(p => p.name == playerName),
                 decision,
                 amount
             );
+            if(decision == Poker.Game.Table.Decision.Tip)
+            {
+                Clients.Group(table.joinCode).SendAsync("DealerTipped");
+            }
         }
 
         public void StartGame(string joinCode)
@@ -155,5 +161,6 @@ namespace PokerServer.Hubs
             if (table == null) throw new HubException("Table not found.");
             table.PlayHand();
         }
+
     }
 }

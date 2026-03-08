@@ -1,6 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿using System.Numerics;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Poker.Models;
 using Poker.Models.DTOs;
+using Poker.Services;
 
 namespace Poker.Game;
 
@@ -27,7 +30,8 @@ public class Table
         Fold,
         Call,
         Raise,
-        Show
+        Show,
+        Tip
     }
     public enum GameStage 
     { 
@@ -44,8 +48,14 @@ public class Table
     public event Action<GameStateDto> OnGameStateChanged;
     public event Action<Player> OnPlayerTurn;
 
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    private System.Timers.Timer? _turnTimer;
+    private DateTime _turnEndTime;
+    private const int TurnDurationSeconds = 15;
+
     public GameStage CurrentStage { get; private set; }
-    public Player CurrentPlayer { get; private set; }
+    public Player? CurrentPlayer { get; private set; }
     private int _currentPlayerIndex;
 
     public List<Player> playersInGame = new(7);
@@ -68,7 +78,7 @@ public class Table
     Dictionary<Player, int> handWinners = new();
     private string winningHandDescription = string.Empty;
 
-    public Table(int buyIn, string joinCode)
+    public Table(int buyIn, string joinCode, IServiceScopeFactory scopeFactory)
     {
         deck = new Deck();
         this.buyIn = buyIn;
@@ -77,6 +87,32 @@ public class Table
         minRaise = smallBlind * 2;
         this.joinCode = joinCode;
         CurrentStage = GameStage.NotPlayable;
+        _scopeFactory = scopeFactory;
+        _turnTimer = new System.Timers.Timer(TurnDurationSeconds * 1000);
+        _turnTimer.AutoReset = false;
+        _turnTimer.Elapsed += async (s, e) => await OnTurnTimeout();
+    }
+
+    private void StartTimer()
+    {
+        _turnTimer?.Stop();
+        _turnEndTime = DateTime.UtcNow.AddSeconds(TurnDurationSeconds);
+        _turnTimer?.Start();
+    }
+
+    private void StopTimer()
+    {
+        _turnTimer?.Stop();
+    }
+
+    private async Task OnTurnTimeout()
+    {
+        if (CurrentPlayer == null) return;
+
+        var canCheck = (toCall - roundBets[CurrentPlayer]) == 0;
+        var decision = canCheck ? Decision.Call : Decision.Fold;
+
+        PlayerAction(CurrentPlayer, decision, 0);
     }
 
     public void PlayHand()
@@ -110,16 +146,27 @@ public class Table
         _currentPlayerIndex = playersInGame.Count == 2 ? smallBlindIndex : NextIndex(bigBlindIndex);
         CurrentPlayer = playersInGame[_currentPlayerIndex];
 
+        StartTimer();
+
         NotifyStateUpdate();
     }
 
     public void PlayerAction(Player player, Decision decision, int amount = 0)
     {
+        if(decision == Decision.Tip && player.tableBalance > 0) 
+        { 
+            player.tableBalance -= 1;
+            NotifyStateUpdate();
+            return;
+        }
+
         if (player != CurrentPlayer && decision != Decision.Show)
         {
             OnGameMessage?.Invoke("It is not your turn.");
             return;
         }
+
+        StopTimer();
 
         ProcessDecision(player, decision, amount);
 
@@ -137,7 +184,7 @@ public class Table
 
     private async Task DelayAndPlayHand()
     {
-        await Task.Delay(5000);
+        await Task.Delay(8000);
         restartingHand = false;
         PlayHand();
     }
@@ -250,6 +297,8 @@ public class Table
                 _currentPlayerIndex = NextIndex(_currentPlayerIndex);
                 CurrentPlayer = playersInGame[_currentPlayerIndex];
             } while (playerStatuses[CurrentPlayer] == PlayerStatus.Folded || playerStatuses[CurrentPlayer] == PlayerStatus.AllIn);
+
+            StartTimer();
         }
         NotifyStateUpdate();
     }
@@ -302,6 +351,7 @@ public class Table
                 _currentPlayerIndex = NextIndex(_currentPlayerIndex);
                 CurrentPlayer = playersInGame[_currentPlayerIndex];
             }
+            StartTimer();
         }
     }
 
@@ -335,6 +385,8 @@ public class Table
 
     private Dictionary<Player, int> ResolveRound()
     {
+        CurrentPlayer = null;
+
         Dictionary<Player, int> winningsByPlayer = new();
         Dictionary<Player, int> playerScores = playersInGame.Where(p => playerStatuses[p] != PlayerStatus.Folded).ToDictionary(p => p, CheckScore);
 
@@ -406,8 +458,29 @@ public class Table
                 }
             }
         }
-
+        _ = CaseLottery(winningsByPlayer);
         return winningsByPlayer;
+    }
+
+    private async Task CaseLottery(Dictionary<Player, int> winners)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var utilService = scope.ServiceProvider.GetRequiredService<UtilService>();
+
+            foreach (var winner in winners)
+            {
+                if (RandomNumberGenerator.GetInt32(100) == 0)
+                {
+                    await utilService.AddCaseToPlayer(winner.Key.name);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lottery error: {ex.Message}");
+        }
     }
 
     private void Reindex()
@@ -541,7 +614,7 @@ public class Table
         if (players.Count > 6)
             return;
         players.Add(player);
-        if (players.Count == 2)
+        if (players.Count == 2 && CurrentStage == GameStage.NotPlayable)
         {
             CurrentStage = GameStage.NotStarted;
         }

@@ -22,4 +22,6 @@ public partial class Player
     public virtual PlayerTable? PlayerTable { get; set; }
 
     public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+    public virtual PlayerCases? PlayerCases { get; set; }
 }

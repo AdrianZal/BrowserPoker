@@ -1,0 +1,92 @@
+﻿@page "/mypacks"
+@using Microsoft.AspNetCore.Authorization
+@using Poker.Models.DTOs
+@using Poker.Services
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UtilService UtilService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@if (loading)
+{
+    <div class="loading">
+        <h1>Loading skins...</h1>
+    </div>
+}
+else
+{
+    <div class="case-container">
+        <img src="@mysteryImage" alt="Mystery" />
+		<h1>@casesCount LEFT</h1>
+        <img style="height: 10%" src="@openButtonImage" alt="Open"
+             @onpointerleave="() => OffButton(Button.Open)"
+             @onpointerenter="() => OverButton(Button.Open)"
+             @onpointerdown="() => ClickButton(Button.Open)"
+             @onpointerup="() => OverButton(Button.Open)" />
+    </div>
+}
+
+@code {
+    private bool loading = true;
+    private string currentUserName;
+    private int casesCount;
+    private string mysteryImage = "images/other/mystery.png";
+    private string openButtonImage = "images/buttons/openOff.png";
+
+    private enum Button
+    {
+        Open
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUserName = HttpContextAccessor.HttpContext?.User?.Identity?.Name;
+
+        if (string.IsNullOrEmpty(currentUserName))
+        {
+            Navigation.NavigateTo("/menu");
+            return;
+        }
+        casesCount = await UtilService.GetPlayerCasesCount(currentUserName);
+        loading = false;
+    }
+
+    private void OffButton(Button button)
+    {
+        switch (button)
+        {
+            case Button.Open:
+                openButtonImage = "images/buttons/openOff.png";
+                break;
+        }
+    }
+
+    private void OverButton(Button button)
+    {
+        switch (button)
+        {
+            case Button.Open:
+                openButtonImage = "images/buttons/openOn.png";
+                break;
+        }
+    }
+
+    private async Task ClickButton(Button button)
+    {
+        switch (button)
+        {
+            case Button.Open:
+                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
+				openButtonImage = "images/buttons/openClick.png";
+                if(casesCount <= 0)
+                {
+                    return;
+				}
+                mysteryImage = "images/cardReverses/" + await UtilService.OpenCase(currentUserName);
+                casesCount = await UtilService.GetPlayerCasesCount(currentUserName);
+                break;
+        }
+    }
+}
