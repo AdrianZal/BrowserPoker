@@ -19,13 +19,19 @@ else
 {
     <div class="case-container">
         <img src="@mysteryImage" alt="Mystery" />
-		<h1>@casesCount LEFT</h1>
+        <h1>@casesCount LEFT</h1>
         <img style="height: 10%" src="@openButtonImage" alt="Open"
              @onpointerleave="() => OffButton(Button.Open)"
              @onpointerenter="() => OverButton(Button.Open)"
              @onpointerdown="() => ClickButton(Button.Open)"
              @onpointerup="() => OverButton(Button.Open)" />
     </div>
+    @if (owned)
+    {
+        <div class="duplicate-container">
+            <img src="@ownedImage" alt="Owned" />
+        </div>
+    }
 }
 
 @code {
@@ -33,7 +39,9 @@ else
     private string currentUserName;
     private int casesCount;
     private string mysteryImage = "images/other/mystery.png";
+    private string ownedImage = "images/other/owned.png";
     private string openButtonImage = "images/buttons/openOff.png";
+    private bool owned = false;
 
     private enum Button
     {
@@ -79,12 +87,15 @@ else
         {
             case Button.Open:
                 JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-				openButtonImage = "images/buttons/openClick.png";
+                openButtonImage = "images/buttons/openClick.png";
                 if(casesCount <= 0)
                 {
                     return;
-				}
-                mysteryImage = "images/cardReverses/" + await UtilService.OpenCase(currentUserName);
+                }
+                owned = false;
+                var (fileName, duplicate) = await UtilService.OpenCase(currentUserName);
+                owned = duplicate;
+                mysteryImage = "images/cardReverses/" + fileName;
                 casesCount = await UtilService.GetPlayerCasesCount(currentUserName);
                 break;
         }

@@ -1,5 +1,8 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.Metrics;
+using System.Numerics;
 using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Poker.Models;
 using Poker.Models.DTOs;
@@ -48,7 +51,10 @@ public class Table
     public event Action<GameStateDto> OnGameStateChanged;
     public event Action<Player> OnPlayerTurn;
 
+    private readonly object _lock = new object();
+
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IHandEvaluator _handEvaluator;
 
     private System.Timers.Timer? _turnTimer;
     private DateTime _turnEndTime;
@@ -73,12 +79,14 @@ public class Table
     private bool restartingHand = false;
     Dictionary<Player, int> roundBets = new();
     Dictionary<Player, int> handBets = new();
+    Dictionary<Player, int> playerTips = new();
     Dictionary<Player, PlayerRole> playerRoles = new();
     Dictionary<Player, PlayerStatus> playerStatuses = new();
     Dictionary<Player, int> handWinners = new();
     private string winningHandDescription = string.Empty;
+    private bool isLocked;
 
-    public Table(int buyIn, string joinCode, IServiceScopeFactory scopeFactory)
+    public Table(int buyIn, string joinCode, IServiceScopeFactory scopeFactory, IHandEvaluator handEvaluator)
     {
         deck = new Deck();
         this.buyIn = buyIn;
@@ -88,9 +96,11 @@ public class Table
         this.joinCode = joinCode;
         CurrentStage = GameStage.NotPlayable;
         _scopeFactory = scopeFactory;
+        _handEvaluator = handEvaluator;
         _turnTimer = new System.Timers.Timer(TurnDurationSeconds * 1000);
         _turnTimer.AutoReset = false;
         _turnTimer.Elapsed += async (s, e) => await OnTurnTimeout();
+        isLocked = false;
     }
 
     private void StartTimer()
@@ -117,69 +127,76 @@ public class Table
 
     public void PlayHand()
     {
-        players.RemoveAll(p => p.tableBalance <= 0);
-        playersInGame = players.ToList();
-        
-        if (playersInGame.Count() < 2) 
+        lock (_lock)
         {
-            cards.Clear();
-            handBets.Clear();
-            roundBets.Clear();
-            playerRoles.Clear();
-            playerStatuses.Clear();
-            handWinners.Clear();
-            CurrentPlayer = null;
-            winningHandDescription = string.Empty;
-            foreach (var p in playersInGame)
+            players.RemoveAll(p => p.tableBalance <= 0);
+            playersInGame = players.ToList();
+
+            if (playersInGame.Count() < 2)
             {
-                p.cards.Clear();
+                cards.Clear();
+                handBets.Clear();
+                roundBets.Clear();
+                playerRoles.Clear();
+                playerStatuses.Clear();
+                handWinners.Clear();
+                CurrentPlayer = null;
+                winningHandDescription = string.Empty;
+                foreach (var p in playersInGame)
+                {
+                    p.cards.Clear();
+                }
+                CurrentStage = GameStage.NotPlayable;
+                NotifyStateUpdate();
+                return;
             }
-            CurrentStage = GameStage.NotPlayable;
+
+            CurrentStage = GameStage.PreFlop;
+            Deal();
+            BettingRoundReset(true);
+
+            _currentPlayerIndex = playersInGame.Count == 2 ? smallBlindIndex : NextIndex(bigBlindIndex);
+            CurrentPlayer = playersInGame[_currentPlayerIndex];
+
+            StartTimer();
+
             NotifyStateUpdate();
-            return;
         }
-
-        CurrentStage = GameStage.PreFlop;
-        Deal();
-        BettingRoundReset(true);
-
-        _currentPlayerIndex = playersInGame.Count == 2 ? smallBlindIndex : NextIndex(bigBlindIndex);
-        CurrentPlayer = playersInGame[_currentPlayerIndex];
-
-        StartTimer();
-
-        NotifyStateUpdate();
     }
 
     public void PlayerAction(Player player, Decision decision, int amount = 0)
     {
-        if(decision == Decision.Tip && player.tableBalance > 0) 
-        { 
-            player.tableBalance -= 1;
-            NotifyStateUpdate();
-            return;
-        }
-
-        if (player != CurrentPlayer && decision != Decision.Show)
+        lock (_lock)
         {
-            OnGameMessage?.Invoke("It is not your turn.");
-            return;
-        }
-
-        StopTimer();
-
-        ProcessDecision(player, decision, amount);
-
-        if (decision != Decision.Show)
-        {
-            AdvanceGame();
-            if (CurrentStage == GameStage.GameOver)
+            if (decision == Decision.Tip && player.tableBalance > 0)
             {
-                restartingHand = true;
-                _ = DelayAndPlayHand();
+                player.tableBalance -= 1;
+                playerTips[player] += 1;
+                NotifyStateUpdate();
+                return;
             }
+
+            if (player != CurrentPlayer && decision != Decision.Show)
+            {
+                OnGameMessage?.Invoke("It is not your turn.");
+                return;
+            }
+
+            StopTimer();
+
+            ProcessDecision(player, decision, amount);
+
+            if (decision != Decision.Show)
+            {
+                AdvanceGame();
+                if (CurrentStage == GameStage.GameOver)
+                {
+                    restartingHand = true;
+                    _ = DelayAndPlayHand();
+                }
+            }
+            NotifyStateUpdate();
         }
-        NotifyStateUpdate();
     }
 
     private async Task DelayAndPlayHand()
@@ -271,7 +288,7 @@ public class Table
         if (playerStatuses.Count(s => s.Value != PlayerStatus.Folded) == 1)
         {
             CurrentStage = GameStage.GameOver;
-            handWinners = ResolveRound();
+            handWinners = ResolveRound(true);
             NotifyStateUpdate();
             return;
         }
@@ -333,7 +350,7 @@ public class Table
                 CurrentStage = GameStage.River;
                 break;
             case GameStage.River:
-                handWinners = ResolveRound();
+                handWinners = ResolveRound(false);
                 CurrentStage = GameStage.GameOver;
                 break;
         }
@@ -358,22 +375,40 @@ public class Table
     // Helper to send data out
     public void NotifyStateUpdate()
     {
-        var dto = new GameStateDto
+        lock (_lock)
         {
-            Players = CurrentStage == GameStage.NotStarted || CurrentStage == GameStage.NotPlayable? players : playersInGame,
-            Stage = CurrentStage,
-            TableCards = cards,
-            PlayerBets = roundBets.ToDictionary(k => k.Key.name, v => v.Value),
-            Pot = handBets.Values.Sum(),
-            ToCall = toCall,
-            MinRaise = minRaise,
-            CurrentPlayer = CurrentPlayer,
-            Roles = playerRoles.ToDictionary(k => k.Key.name, v => v.Value),
-            Statuses = playerStatuses.ToDictionary(k => k.Key.name, v => v.Value),
-            HandWinners = handWinners.ToDictionary(k => k.Key.name, v => v.Value),
-            WinningHand = winningHandDescription
-        };
-        OnGameStateChanged?.Invoke(dto);
+            // 1. Określamy listę graczy wysyłaną do klienta
+            var activeList = (CurrentStage == GameStage.NotStarted || CurrentStage == GameStage.NotPlayable)
+                             ? players : playersInGame;
+
+            var dto = new GameStateDto
+            {
+                PlayersInGame = activeList.ToList(),
+                Players = players,
+                Stage = CurrentStage,
+                TableCards = cards.ToList(),
+
+                // 2. FILTRUJEMY SŁOWNIKI: Tylko gracze z listy activeList trafiają do DTO
+                // Zapobiega to kolizji kluczy (imion) ze "starych" obiektów graczy
+                PlayerBets = roundBets.Where(kv => activeList.Contains(kv.Key))
+                                      .ToDictionary(kv => kv.Key.name, kv => kv.Value),
+
+                Statuses = playerStatuses.Where(kv => activeList.Contains(kv.Key))
+                                         .ToDictionary(kv => kv.Key.name, kv => kv.Value),
+
+                Roles = playerRoles.Where(kv => activeList.Contains(kv.Key))
+                                   .ToDictionary(kv => kv.Key.name, kv => kv.Value),
+
+                Pot = handBets.Values.Sum(),
+                ToCall = toCall,
+                MinRaise = minRaise,
+                CurrentPlayer = CurrentPlayer,
+                HandWinners = handWinners.ToDictionary(k => k.Key.name, v => v.Value),
+                WinningHand = winningHandDescription,
+                IsLocked = isLocked
+            };
+            OnGameStateChanged?.Invoke(dto);
+        }
     }
 
     private void HandleBet(Player player, int amount)
@@ -383,13 +418,21 @@ public class Table
         player.tableBalance -= amount;
     }
 
-    private Dictionary<Player, int> ResolveRound()
+    private Dictionary<Player, int> ResolveRound(bool endedEarly)
     {
         CurrentPlayer = null;
 
         Dictionary<Player, int> winningsByPlayer = new();
-        Dictionary<Player, int> playerScores = playersInGame.Where(p => playerStatuses[p] != PlayerStatus.Folded).ToDictionary(p => p, CheckScore);
-
+        Dictionary<Player, int> playerScores = new();
+        if (endedEarly)
+        {
+           playerScores = playersInGame.Where(p => playerStatuses[p] != PlayerStatus.Folded).ToDictionary(p => p, p => 0);
+        }
+        else
+        {
+            playerScores = playersInGame.Where(p => playerStatuses[p] != PlayerStatus.Folded).ToDictionary(p => p, p => _handEvaluator.Evaluate7(p.cards.Concat(cards).ToList()));
+        }
+        
         int maxScore = playerScores.Values.Max();
 
         var levels = handBets.Values.Where(v => v > 0).Distinct().OrderBy(v => v).ToList();
@@ -471,9 +514,10 @@ public class Table
 
             foreach (var winner in winners)
             {
-                if (RandomNumberGenerator.GetInt32(100) == 0)
+                if (RandomNumberGenerator.GetInt32(10000) < (100 + playerTips[winner.Key] * 10))
                 {
                     await utilService.AddCaseToPlayer(winner.Key.name);
+                    playerTips[winner.Key] = 0;
                 }
             }
         }
@@ -611,42 +655,61 @@ public class Table
 
     public async Task AddPlayer(Player player)
     {
-        if (players.Count > 6)
-            return;
-        players.Add(player);
-        if (players.Count == 2 && CurrentStage == GameStage.NotPlayable)
+        lock (_lock)
         {
-            CurrentStage = GameStage.NotStarted;
+            if (players.Count >= 7 || players.Any(p => p.name == player.name))
+                return;
+            players.Add(player);
+            if (players.Count == 2 && CurrentStage == GameStage.NotPlayable)
+            {
+                CurrentStage = GameStage.NotStarted;
+            }
+            playerTips[player] = 0;
+            NotifyStateUpdate();
         }
-        NotifyStateUpdate();
     }
 
     public async Task RemovePlayer(Player player)
     {
-        if (player == null || !players.Contains(player))
+        lock (_lock)
         {
-            return;
-        }
-        if (CurrentStage != GameStage.NotStarted && CurrentStage != GameStage.NotPlayable)
-        {
-            if (CurrentPlayer == player)
+            if (player == null || !players.Contains(player))
+            {
+                return;
+            }
+            if (CurrentStage != GameStage.NotStarted && CurrentStage != GameStage.NotPlayable)
+            {
+                if (CurrentPlayer == player)
+                {
+                    players.Remove(player);
+                    PlayerAction(player, Decision.Fold, 0);
+                }
+                else if (CurrentStage != GameStage.GameOver)
+                {
+                    playerStatuses[player] = PlayerStatus.Folded;
+                }
+            }
+            if (players.Contains(player))
             {
                 players.Remove(player);
-                PlayerAction(player, Decision.Fold, 0);
             }
-            else
-            {
-                playerStatuses[player] = PlayerStatus.Folded;
-            }
-        }
-        if (players.Contains(player))
-        {
-            players.Remove(player); 
-        }
             if (players.Count() < 2 && CurrentStage == GameStage.NotStarted)
-        {
-            CurrentStage = GameStage.NotPlayable;
+            {
+                CurrentStage = GameStage.NotPlayable;
+            }
+            playerTips.Remove(player);
+            NotifyStateUpdate();
         }
+    }
+
+    public bool IsLocked()
+    {
+        return isLocked;
+    }
+
+    public void SetLocked(bool locked)
+    {
+        isLocked = locked;
         NotifyStateUpdate();
     }
 
@@ -686,252 +749,18 @@ public class Table
 
     private string WhatHand(int x)
     {
-        if (x >= 90000000)
-            return "Royal flush";
-        if (x >= 8000000)
-            return "Straight flush";
-        if (x >= 7000000)
-            return "Four of a kind";
-        if (x >= 6000000)
-            return "Full house";
-        if (x >= 5000000)
-            return "Flush";
-        if (x >= 4000000)
-            return "Straight";
-        if (x >= 3000000)
-            return "Three of a kind";
-        if (x >= 2000000)
-            return "Two pair";
-        if (x >= 1000000)
-            return "Pair";
-        return "High card";
+        if (x == 7462) return "Royal flush";
+        if (x >= 7453) return "Straight flush";
+        if (x >= 7297) return "Four of a kind";
+        if (x >= 7141) return "Full house";
+        if (x >= 5864) return "Flush";
+        if (x >= 5854) return "Straight";
+        if (x >= 4996) return "Three of a kind";
+        if (x >= 4138) return "Two pair";
+        if (x >= 1278) return "Pair";
+        if (x > 0) return "High card";
+
+        return "Invalid hand";
     }
 
-    private int CheckScore(Player player)
-    {
-        var hand = cards.Concat(player.cards).ToList();
-
-        var x = IsRoyalFlush(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsStraightFlush(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsFourOfAKind(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsFullHouse(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsFlush(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsStraight(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsThreeOfAKind(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsTwoPair(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsPair(hand);
-        if (x != 0)
-        {
-            return x;
-        }
-
-        x = IsHighCard(hand);
-        return x;
-    }
-
-    private int IsRoyalFlush(List<Card> hand)
-    {
-        var royalValues = new HashSet<int> { 10, 11, 12, 13, 14 };
-        var groups = hand.GroupBy(c => c.Suit);
-        foreach (var group in groups)
-        {
-            var values = new HashSet<int>(group.Select(c => c.Value));
-            if (royalValues.IsSubsetOf(values))
-            {
-                return 9000000;
-            }
-        }
-
-        return 0;
-    }
-
-    private int IsStraightFlush(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Suit);
-        foreach (var group in groups)
-        {
-            var x = IsStraight(group.ToList());
-            if (x != 0) return 4000000 + x;
-        }
-
-        return 0;
-    }
-
-    private int IsFourOfAKind(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Value);
-        var four = groups.FirstOrDefault(g => g.Count() == 4);
-        if (four == null)
-            return 0;
-        var fourValue = four.Key;
-        var kicker = groups.Where(g => g.Count() != 4).Max(g => g.Key);
-        return 7000000 + 50 * fourValue + kicker;
-    }
-
-    private int IsFullHouse(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Value);
-        var threeValue = 0;
-        var pairValue = 0;
-        foreach (var group in groups)
-        {
-            if (group.Count() == 3)
-            {
-                if (group.Key > threeValue)
-                    threeValue = group.Key;
-            }
-
-            if (group.Count() >= 2)
-            {
-                if (group.Key > pairValue && group.Key != threeValue)
-                    pairValue = group.Key;
-            }
-        }
-
-        if (threeValue == 0 || pairValue == 0)
-            return 0;
-        return 6000000 + 50 * threeValue + pairValue;
-    }
-
-    private int IsFlush(List<Card> hand)
-    {
-        var flush = hand.GroupBy(c => c.Suit)
-            .OrderByDescending(g => g.Count())
-            .FirstOrDefault(g => g.Count() > 4);
-        if (flush == null) return 0;
-        return 5000000 + IsHighCard(flush.ToList());
-    }
-
-    private int IsStraight(List<Card> hand)
-    {
-        var values = new SortedSet<int>(hand.Select(c => c.Value)).ToList();
-        if (values.Count < 5)
-            return 0;
-        if (new[] { 14, 2, 3, 4, 5 }.All(values.Contains))
-            return 4000005;
-        var inRow = 0;
-        var highest = 0;
-        for (var i = 1; i < values.Count; i++)
-        {
-            if (values[i - 1] + 1 == values[i])
-                inRow++;
-            else
-                inRow = 0;
-
-            if (inRow >= 4)
-                highest = values[i];
-        }
-
-        if (highest > 0)
-            return 4000000 + highest;
-        return 0;
-    }
-
-    private int IsThreeOfAKind(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Value);
-        var threeValue = 0;
-        foreach (var group in groups)
-        {
-            if (group.Count() == 3 && group.Key > threeValue) threeValue = group.Key;
-        }
-
-        if (threeValue == 0)
-            return 0;
-        var kickers = hand.Where(g => g.Value != threeValue)
-            .OrderByDescending(c => c.Value)
-            .Take(2)
-            .ToList();
-        return 3000000 + 10000 * threeValue + IsHighCard(kickers);
-    }
-
-    private int IsTwoPair(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Value);
-        groups = groups.OrderByDescending(g => g.Key).ToList();
-        var pairHigh = 0;
-        var pairLow = 0;
-        foreach (var group in groups)
-        {
-            if (group.Count() == 2 && pairHigh == 0) pairHigh = group.Key;
-            else if (group.Count() == 2) pairLow = group.Key;
-        }
-
-        if (pairHigh == 0 || pairLow == 0) return 0;
-        return 2000000 + 10000 * pairHigh + 1000 * pairLow + IsHighCard(
-            hand.Where(g => g.Value != pairHigh && g.Value != pairLow)
-                .OrderByDescending(c => c.Value)
-                .Take(1)
-                .ToList()
-        );
-    }
-
-    private int IsPair(List<Card> hand)
-    {
-        var groups = hand.GroupBy(c => c.Value);
-        groups = groups.OrderByDescending(g => g.Key).ToList();
-        var pairHigh = groups.FirstOrDefault(g => g.Count() == 2)?.Key ?? 0;
-        if (pairHigh == 0) return 0;
-        return 1000000 + 10000 * pairHigh + IsHighCard(
-            hand.Where(g => g.Value != pairHigh)
-                .OrderByDescending(c => c.Value)
-                .Take(3)
-                .ToList()
-        );
-    }
-
-    private int IsHighCard(List<Card> hand)
-    {
-        var score = 0;
-        var multiplier = 1;
-        var orderedHand = hand.OrderByDescending(c => c.Value).Take(5);
-        orderedHand = orderedHand.OrderBy(c => c.Value);
-        foreach (var card in orderedHand)
-        {
-            score += card.Value * multiplier;
-            multiplier *= 10;
-        }
-
-        return score;
-    }
 }

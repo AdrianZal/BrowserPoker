@@ -1,9 +1,11 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Poker.Components;
+using Poker.Game;
 using Poker.Models;
 using Poker.Services;
 using PokerServer.Hubs;
@@ -72,12 +74,18 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<UtilService>();
 
-builder.Services.AddScoped(sp => new HttpClient
+builder.Services.AddScoped(sp =>
 {
-    BaseAddress = new Uri(builder.Configuration["FrontendUrl"] ?? "https://localhost:7274")
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient
+    {
+        BaseAddress = new Uri(navigationManager.BaseUri)
+    };
 });
 
 builder.Services.AddSingleton<GameService>();
+builder.Services.AddSingleton<IHandEvaluator>(sp =>
+    new LutEvaluator("/home/pi/poker-data/nonflush_lut.dat", "/home/pi/poker-data/flush_lut.dat"));
 builder.Services.AddSignalR();
 builder.Services.AddHostedService<TokenCleanupService>();
 
@@ -117,4 +125,35 @@ app.UseCors(policy =>
 
 app.MapHub<PokerHub>("/pokerhub");
 
+app.MapGet("/api/assets/manifest", (IWebHostEnvironment env) =>
+{
+    var root = env.WebRootPath;
+
+    if (string.IsNullOrEmpty(root) || !Directory.Exists(root))
+    {
+        return Results.Problem("Serwer nie mo¿e zlokalizowaæ folderu wwwroot.");
+    }
+
+    var foldersToScan = new[] { "Images", "Sounds" };
+
+    var files = foldersToScan
+        .SelectMany(folder => {
+            var fullPath = Path.Combine(root, folder);
+
+            if (!Directory.Exists(fullPath))
+            {
+                var capitalizedFolder = char.ToUpper(folder[0]) + folder.Substring(1);
+                var altPath = Path.Combine(root, capitalizedFolder);
+                if (Directory.Exists(altPath)) fullPath = altPath;
+            }
+
+            return Directory.Exists(fullPath)
+                ? Directory.GetFiles(fullPath, "*.*", SearchOption.AllDirectories)
+                : Enumerable.Empty<string>();
+        })
+        .Select(file => Path.GetRelativePath(root, file).Replace("\\", "/"))
+        .ToList();
+
+    return Results.Ok(files);
+});
 app.Run();

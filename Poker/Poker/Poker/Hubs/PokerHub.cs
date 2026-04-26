@@ -34,6 +34,7 @@ namespace PokerServer.Hubs
 
             var table = gameService.GetTable(joinCode);
             if (table == null) throw new HubException("Table not found.");
+            if (table.IsLocked()) throw new HubException("Table locked.");
 
             await Groups.AddToGroupAsync(Context.ConnectionId, joinCode);
 
@@ -153,6 +154,22 @@ namespace PokerServer.Hubs
             {
                 Clients.Group(table.joinCode).SendAsync("DealerTipped");
             }
+        }
+
+        public void SendMessage(string playerName, string message)
+        {
+            var table = gameService.GetTableByPlayer(playerName);
+            if (table == null) throw new HubException("Table not found.");
+            var wholeMessage = playerName + ": " + message;
+            Clients.Group(table.joinCode).SendAsync("Message", wholeMessage);
+        }
+
+        public void SetLock(string playerName, bool locked)
+        {
+            var table = gameService.GetTableByPlayer(playerName);
+            if (table == null) throw new HubException("Table not found.");
+            table.SetLocked(locked);
+            Clients.Group(table.joinCode).SendAsync("TableLock", table.IsLocked());
         }
 
         public void StartGame(string joinCode)

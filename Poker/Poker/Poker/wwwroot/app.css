@@ -7,7 +7,7 @@
 
 html, body {
     font-family: 'Tiny5', system-ui;
-    background-color: gray;
+    background-color: slategray;
 }
 h1 {
     -webkit-user-select: none;
@@ -103,15 +103,15 @@ img {
 
 .card-pair-top-right {
     top: 15%;
-    right: 2%;
+    right: 7%;
 }
 .card-pair-mid-right {
     top: 45%;
-    right: -8%;
+    right: 0%;
 }
 .card-pair-bot-right {
     bottom: 15%;
-    right: 2%;
+    right: 7%;
 }
 .card-pair-mid {
     bottom: 8%;
@@ -120,15 +120,15 @@ img {
 }
 .card-pair-bot-left {
     bottom: 15%;
-    left: 2%;
+    left: 7%;
 }
 .card-pair-mid-left {
     top: 45%;
-    left: -8%;
+    left: 0%;
 }
 .card-pair-top-left {
     top: 15%;
-    left: 2%;
+    left: 7%;
 }
 
 h1 {
@@ -143,7 +143,7 @@ h1 {
     justify-content: center;
     height: 4%;
     top: 22%;
-    right: 20%;
+    right: 25%;
 }
 .token-mid-right {
     position: absolute;
@@ -151,7 +151,7 @@ h1 {
     justify-content: center;
     height: 4%;
     top: 52%;
-    right: 10%;
+    right: 18%;
 }
 .token-bot-right {
     position: absolute;
@@ -159,7 +159,7 @@ h1 {
     justify-content: center;
     height: 4%;
     bottom: 18%;
-    right: 20%;
+    right: 25%;
 }
 .token-mid {
     position: absolute;
@@ -176,7 +176,7 @@ h1 {
     justify-content: center;
     height: 4%;
     bottom: 18%;
-    left: 20%;
+    left: 25%;
 }
 .token-mid-left {
     position: absolute;
@@ -184,7 +184,7 @@ h1 {
     justify-content: center;
     height: 4%;
     top: 52%;
-    left: 10%;
+    left: 18%;
 }
 .token-top-left {
     position: absolute;
@@ -192,7 +192,7 @@ h1 {
     justify-content: center;
     height: 4%;
     top: 22%;
-    left: 20%;
+    left: 25%;
 }
 .name {
     position: absolute;
@@ -208,17 +208,17 @@ h1 {
     }
 .name-top-right {
     top: 27%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, 50%);
 }
 .name-mid-right {
     top: 57%;
-    right: 1%;
+    right: 9%;
     transform: translate(50%, 50%);
 }
 .name-bot-right {
     bottom: 8.5%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, -50%);
 }
 .name-mid {
@@ -228,17 +228,17 @@ h1 {
 }
 .name-bot-left {
     bottom: 8.5%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, -50%);
 }
 .name-mid-left {
     top: 57%;
-    left: 1%;
+    left: 9%;
     transform: translate(-50%, 50%);
 }
 .name-top-left {
     top: 27%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, 50%);
 }
 
@@ -250,17 +250,17 @@ h1 {
 }
 .time-top-right {
     top: 10%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, 50%);
 }
 .time-mid-right {
     top: 40%;
-    right: 1%;
+    right: 9%;
     transform: translate(50%, 50%);
 }
 .time-bot-right {
     bottom: 28%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, -50%);
 }
 .time-mid {
@@ -270,17 +270,17 @@ h1 {
 }
 .time-bot-left {
     bottom: 28%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, -50%);
 }
 .time-mid-left {
     top: 40%;
-    left: 1%;
+    left: 9%;
     transform: translate(-50%, 50%);
 }
 .time-top-left {
     top: 10%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, 50%);
 }
 
@@ -309,19 +309,19 @@ h1 {
 
 .balance-top-right {
     top: 31%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, 50%);
 }
 
 .balance-mid-right {
     top: 61%;
-    right: 1%;
+    right: 9%;
     transform: translate(50%, 50%);
 }
 
 .balance-bot-right {
     bottom: 5%;
-    right: 11%;
+    right: 16%;
     transform: translate(50%, -50%);
 }
 
@@ -333,19 +333,19 @@ h1 {
 
 .balance-bot-left {
     bottom: 5%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, -50%);
 }
 
 .balance-mid-left {
     top: 61%;
-    left: 1%;
+    left: 9%;
     transform: translate(-50%, 50%);
 }
 
 .balance-top-left {
     top: 31%;
-    left: 11%;
+    left: 16%;
     transform: translate(-50%, 50%);
 }
 
@@ -357,7 +357,7 @@ h1 {
     display: flex;
     justify-content: center;
     top: 17%;
-    right: 21%;
+    right: 26%;
     text-align: left
 }
 .bet-mid-right {
@@ -365,7 +365,7 @@ h1 {
     display: flex;
     justify-content: center;
     top: 47%;
-    right: 11%;
+    right: 19%;
     text-align: left;
 }
 .bet-bot-right {
@@ -373,7 +373,7 @@ h1 {
     display: flex;
     justify-content: center;
     bottom: 23%;
-    right: 21%;
+    right: 26%;
     text-align: left;
 }
 .bet-mid {
@@ -388,21 +388,21 @@ h1 {
     display: flex;
     justify-content: center;
     bottom: 23%;
-    left: 21%;
+    left: 26%;
 }
 .bet-mid-left {
     position: absolute;
     display: flex;
     justify-content: center;
     top: 47%;
-    left: 11%;
+    left: 19%;
 }
 .bet-top-left {
     position: absolute;
     display: flex;
     justify-content: center;
     top: 17%;
-    left: 21%;
+    left: 26%;
 }
 .start-button {
     position: absolute;
@@ -494,30 +494,23 @@ h1 {
         font-size: 10cqw;
     }
 
-.side-button {
+.side-buttons {
     position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vw;
+}
+.side-button {
     display: flex;
     justify-content: center;
-    width: 6%;
-    margin: 0;
-    padding: 0;
+    width: 6vw;
 }
     .side-button img {
         width: 100%;
         height: auto;
-        margin: 0;
-        padding: 0;
     }
-
-.side-button-hide {
-    top: 10px;
-    left: 10px;
-}
-
-.side-button-code {
-    top: 6%;
-    left: 10px;
-}
 
 .case-container {
     position: absolute;
@@ -534,14 +527,30 @@ h1 {
 }
 
     .case-container img {
-        height: 60vh; /* Zmniejszono nieco, aby dwa obrazy zmieœci³y siê bez przewijania */
+        height: 60vh;
         width: auto;
-        /* Usuwamy transform: translateY(-30%), poniewa¿ flex-direction: column 
-       lepiej poradzi sobie z roz³o¿eniem elementów */
-        margin: 10px 0; /* Dodaje lekki odstêp miêdzy obrazkami */
+        margin: 10px 0;
     }
     .case-container h1 {
         font-size: 3vh;
+    }
+
+.duplicate-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+}
+    .duplicate-container img {
+        height: 20vh;
+        width: auto;
+        
     }
 
 .dealer {
@@ -570,3 +579,45 @@ h1 {
     justify-content: center;
     transform: translateX(-50%);
 }
+
+.chat {
+    position: absolute;
+    bottom: 50%;
+    left: 10px;
+    transform: translate(0%, 50%);
+    width: 20vw;
+    font-size: 1vw;
+}
+    .chat img {
+        width: 100%;
+    }
+    .chat input {
+        width: 82%;
+        height: 7%;
+        position: absolute;
+        bottom: 5%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        background: none;
+        border: none;
+        outline: none;
+    }
+    .chat textarea {
+        width: 82%;
+        height: 80%;
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        background: none;
+        border: none;
+        outline: none;
+        resize: none;
+        overflow-y: auto;
+        &::-webkit-scrollbar
+        {
+            display: none;
+        }
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }

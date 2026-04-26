@@ -2,7 +2,7 @@
 using Poker.Game;
 using PokerServer.Hubs;
 
-public class GameService(IHubContext<PokerHub> hubContext, IServiceScopeFactory scopeFactory)
+public class GameService(IHubContext<PokerHub> hubContext, IServiceScopeFactory scopeFactory, IHandEvaluator handEvaluator)
 {
     private readonly Dictionary<string, Table> _tables = new();
 
@@ -15,7 +15,7 @@ public class GameService(IHubContext<PokerHub> hubContext, IServiceScopeFactory 
             code = Random.Shared.Next(0, 1000000).ToString("D6");
         } while (_tables.ContainsKey(code));
 
-        var table = new Table(buyIn ,code, scopeFactory);
+        var table = new Table(buyIn ,code, scopeFactory, handEvaluator);
 
         table.OnGameStateChanged += async (state) =>
         {

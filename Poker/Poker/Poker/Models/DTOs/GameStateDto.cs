@@ -2,6 +2,7 @@
 {
     public class GameStateDto
     {
+        public List<Game.Player> PlayersInGame { get; set; } = new();
         public List<Game.Player> Players { get; set; } = new();
         public Game.Table.GameStage Stage { get; set; }
         public List<Game.Card>? TableCards { get; set; }
@@ -14,5 +15,6 @@
         public string WinningHand { get; set; } = string.Empty;
         public Dictionary<string, Game.Table.PlayerRole> Roles { get; set; } = new();
         public Dictionary<string, Game.Table.PlayerStatus> Statuses { get; set; } = new();
+        public bool IsLocked { get; set; }
     }
 }

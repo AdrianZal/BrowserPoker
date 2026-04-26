@@ -67,22 +67,27 @@ namespace Poker.Services
             return playerBalance;
         }
 
-        public async Task<string> OpenCase(string playerName)
+        public async Task<(string fileName, bool duplicate)> OpenCase(string playerName)
         {
+            var player = await context.Players.FirstOrDefaultAsync(p => p.Name == playerName);
+
             var playerCase = await context.PlayerCases
                 .Include(pc => pc.Player)
                 .FirstOrDefaultAsync(pc => pc.Player.Name == playerName);
 
-            if (playerCase == null || playerCase.Number <= 0)
+            if (playerCase == null || playerCase.Number <= 0 || player == null)
             {
-                return string.Empty;
+                return (string.Empty, false);
             }
 
             var randomSkin = await context.CardReverseSkins
                 .OrderBy(s => EF.Functions.Random())
                 .FirstOrDefaultAsync();
 
-            if (randomSkin == null) return string.Empty;
+            if (randomSkin == null)
+            {
+                return (string.Empty, false);
+            }
 
             playerCase.Number--;
 
@@ -97,10 +102,14 @@ namespace Poker.Services
                     SkinId = randomSkin.Id
                 });
             }
+            else
+            {
+                player.Balance += 1000;
+            }
 
             await context.SaveChangesAsync();
 
-            return randomSkin.Filename;
+            return (randomSkin.Filename, false);
         }
 
         public async Task<int> GetPlayerCasesCount(string playerName)

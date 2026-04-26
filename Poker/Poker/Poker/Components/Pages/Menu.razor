@@ -43,6 +43,12 @@
                         Table if full.
                     </div>
                 }
+				else if (tableLocked)
+                {
+                    <div class="text-danger mt-1 text-start">
+                        Table locked.
+                    </div>
+                }
             </div>
             
             <button class="btn btn-primary fs-5 py-2" @onclick="() => HandleGoToMySkins()">
@@ -67,6 +73,7 @@
 @code {
     private bool tableNotExist = false;
     private bool tableIsFull = false;
+	private bool tableLocked = false;
     private string joinCode = string.Empty;
     private string? currentUserName;
     private int balance = 0;
@@ -100,6 +107,11 @@
         {
             tableIsFull = true;
         }
+        else if (GameService.GetTable(joinCode).IsLocked())
+        {
+            tableLocked = true;
+		}
+
         else if (!string.IsNullOrWhiteSpace(joinCode))
         {
             Navigation.NavigateTo($"/game/{joinCode}");

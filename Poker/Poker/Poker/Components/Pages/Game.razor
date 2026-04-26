@@ -10,6 +10,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject GameService GameService
 @inject IJSRuntime JS
+@inject HttpClient Http
 
 <PageTitle>Game</PageTitle>
 
@@ -27,19 +28,33 @@ else
             <img src=@dealerImage alt="Dealer" @onpointerdown="() => Tip()" />
         </div>
 
+        <!--chat-->
+        <div class="chat">
+            <img src="Images/chat/scroll.png" alt="chat" />
+
+            <input type="text"
+                   placeholder="Write a message..."
+                   @bind="messageInput"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown">
+
+            <textarea @ref="chatTextArea" readonly>@chat</textarea>
+
+        </div>
+
             <div style="position: relative; width: 55%; margin: 0 auto;">
-                <img src="images/tables/basic.png" alt="Poker Table" style="width: 100%; height: auto; display: block;" />
+                <img src="Images/tables/basic.png" alt="Poker Table" style="width: 100%; height: auto; display: block;" />
 
 
         @*         @for (int i = 0; i < 7; i++)
                 {
                     <div class="time @($"time{positions[i]}")">
-                        <img src="images/time/55.png" alt="time" />
+                        <img src="Images/time/5.png" alt="time" />
                     </div>
 
                     <div class="card-pair @($"card-pair{positions[i]}")">
-                        <img src="@($"images/cardReverses/default.png")" alt="card1" />
-                        <img src="@($"images/cardReverses/default.png")" alt="card2" />
+                        <img src="@($"Images/cardReverses/default.png")" alt="card1" />
+                        <img src="@($"Images/cardReverses/default.png")" alt="card2" />
 				    </div>
 
                     <div class="name @($"name{positions[i]}")">
@@ -55,112 +70,114 @@ else
                     </div>
 
                     <div class="@($"token{positions[i]}")">
-                            <img src="images/dealerTokens/default.png" alt="token" />
+                            <img src="Images/dealerTokens/default.png" alt="token" />
                     </div>
                 } *@
 
+                
 
                 <!--Players loop-->
-                @for(int i=0; i<gameState.Players.Count; i++)
+                @for(int i=0; i<gameState.PlayersInGame.Count; i++)
                 {
-                    if (gameState.CurrentPlayer != null && gameState.Players[i].name == gameState.CurrentPlayer.name)
+                    string playerName = gameState.PlayersInGame[i].name;
+                    if (gameState.CurrentPlayer != null && playerName == gameState.CurrentPlayer.name)
                     {
                         <div class="time @($"time{positions[i]}")">
-                            <img src="@($"images/time/{turnTime}.png")" alt="time" />
+                            <img src="@($"Images/time/{turnTime}.png")" alt="time" />
                         </div>
                     }
 
-                    if(gameState.Players[i].name == currentUserName)
+                    if (playerName == currentUserName)
                     {
                         <div class="card-pair @($"card-pair{positions[i]}")" @onpointerdown="() => cardsClicked = true" @onpointerup="() => cardsClicked = false" @onpointerleave="() => cardsClicked = false">
-                            @if (gameState.Players[i].name == currentUserName
-                                        && gameState.Players[i].cards.Count() == 2
-                                        || (gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses.ElementAt(i).Value == Poker.Game.Table.PlayerStatus.Showing))
+                            @if (playerName == currentUserName
+                                        && gameState.PlayersInGame[i].cards.Count() == 2
+                                        || (gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses[playerName] == Poker.Game.Table.PlayerStatus.Showing))
                             {
-                                if (hidden && !cardsClicked && gameState.Players[i].name == currentUserName && gameState.Statuses.ElementAt(i).Value != Poker.Game.Table.PlayerStatus.Showing)
+                                if (hidden && !cardsClicked && playerName == currentUserName && gameState.Statuses[playerName] != Poker.Game.Table.PlayerStatus.Showing)
                                 {
-                                    <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card1" />
-                                    <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card2" />
+                                    <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card1" />
+                                    <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card2" />
                                 }
                                 else
                                 {
-                                    <img src="@($"images/cardFaces/default/{gameState.Players[i].cards[0].Value}{gameState.Players[i].cards[0].Suit}.png")" alt="card1" />
-                                    <img src="@($"images/cardFaces/default/{gameState.Players[i].cards[1].Value}{gameState.Players[i].cards[1].Suit}.png")" alt="card2" />
+                                    <img src="@($"Images/cardFaces/default/{gameState.PlayersInGame[i].cards[0].Value}{gameState.PlayersInGame[i].cards[0].Suit}.png")" alt="card1" />
+                                    <img src="@($"Images/cardFaces/default/{gameState.PlayersInGame[i].cards[1].Value}{gameState.PlayersInGame[i].cards[1].Suit}.png")" alt="card2" />
                                 }
                             }
-                            else if (gameState.Players[i].cards.Count() == 2)
+                            else if (gameState.PlayersInGame[i].cards.Count() == 2)
                             {
-                                <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card1" />
-                                <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card2" />
+                                <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card1" />
+                                <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card2" />
                             }
                         </div>
                     }
                     else
                     {
                         <div class="card-pair @($"card-pair{positions[i]}")">
-                            @if (gameState.Players[i].name == currentUserName
-                                            && gameState.Players[i].cards.Count() == 2
-                                            || (gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses.ElementAt(i).Value == Poker.Game.Table.PlayerStatus.Showing))
+                            @if (playerName == currentUserName
+                                            && gameState.PlayersInGame[i].cards.Count() == 2
+                                            || (gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses[playerName] == Poker.Game.Table.PlayerStatus.Showing))
                             {
-                                if (hidden && !cardsClicked && gameState.Players[i].name == currentUserName && gameState.Statuses.ElementAt(i).Value != Poker.Game.Table.PlayerStatus.Showing)
+                                if (hidden && !cardsClicked && playerName == currentUserName && gameState.Statuses[playerName] != Poker.Game.Table.PlayerStatus.Showing)
                                 {
-                                    <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card1" />
-                                    <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card2" />
+                                    <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card1" />
+                                    <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card2" />
                                 }
                                 else
                                 {
-                                    <img src="@($"images/cardFaces/default/{gameState.Players[i].cards[0].Value}{gameState.Players[i].cards[0].Suit}.png")" alt="card1" />
-                                    <img src="@($"images/cardFaces/default/{gameState.Players[i].cards[1].Value}{gameState.Players[i].cards[1].Suit}.png")" alt="card2" />
+                                    <img src="@($"Images/cardFaces/default/{gameState.PlayersInGame[i].cards[0].Value}{gameState.PlayersInGame[i].cards[0].Suit}.png")" alt="card1" />
+                                    <img src="@($"Images/cardFaces/default/{gameState.PlayersInGame[i].cards[1].Value}{gameState.PlayersInGame[i].cards[1].Suit}.png")" alt="card2" />
                                 }
                             }
-                            else if (gameState.Players[i].cards.Count() == 2)
+                            else if (gameState.PlayersInGame[i].cards.Count() == 2)
                             {
-                                <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card1" />
-                                <img src="@($"images/cardReverses/{gameState.Players[i].skinFilename}")" alt="card2" />
+                                <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card1" />
+                                <img src="@($"Images/cardReverses/{gameState.PlayersInGame[i].skinFilename}")" alt="card2" />
                             }
                         </div>
                     }
 
                     <div class="name @($"name{positions[i]}")">
-                        @if (gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == gameState.Players[i].name)
+                        @if (gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == playerName)
                         {
-                            if(gameState.Players[i].name == currentUserName)
+                            if (playerName == currentUserName)
                             {
-                                <h1 style="color: lawngreen; background-color:darkgreen;">@gameState.Players[i].name</h1>
+                                <h1 style="color: lawngreen; background-color:darkgreen;">@playerName</h1>
                             }
                             else
                             {
-                                <h1 style="color: lawngreen">@gameState.Players[i].name</h1>
+                                <h1 style="color: lawngreen">@playerName</h1>
                             }
                         }
                         else
                         {
-                            if (gameState.Players[i].name == currentUserName)
+                            if (playerName == currentUserName)
                             {
-                                <h1 style="color: red; background-color:darkgreen;">@gameState.Players[i].name</h1>
+                                <h1 style="color: red; background-color:darkgreen;">@playerName</h1>
                             }
                             else
                             {
-                                <h1 style="color: red">@gameState.Players[i].name</h1>
+                                <h1 style="color: red">@playerName</h1>
                             }
                         }
                     </div>
 
                     <div class="balance @($"balance{positions[i]}")">
-                        <h1>@gameState.Players[i].tableBalance</h1>
+                        <h1>@gameState.PlayersInGame[i].tableBalance</h1>
                     </div>
 
                     <div class="bet @($"bet{positions[i]}")">
                         @if (gameState.PlayerBets.Count() != 0 && gameState.Stage != Poker.Game.Table.GameStage.NotPlayable && gameState.Stage != Poker.Game.Table.GameStage.NotStarted)
                         {
-                            <h1>@gameState.PlayerBets.ElementAt(i).Value</h1>
+                            <h1>@gameState.PlayerBets[playerName]</h1>
                         }
                     </div>
 
                     <div class="@($"token{positions[i]}")">
-                        @if (gameState.Roles.Count() != 0 && gameState.Roles.ElementAt(i).Value == Poker.Game.Table.PlayerRole.Dealer)
+                        @if (gameState.Roles.Count() != 0 && gameState.Roles[playerName] == Poker.Game.Table.PlayerRole.Dealer)
                         {
-                            <img src="images/dealerTokens/default.png" alt="token" />
+                            <img src="Images/dealerTokens/default.png" alt="token" />
                         }
                     </div>
 				}
@@ -191,7 +208,7 @@ else
                 @if(gameState.Stage == Poker.Game.Table.GameStage.GameOver)
                 {
                     <div class="round-timer">
-                        <img src="@($"images/time/{roundTime}.png")" alt="time" />
+                        <img src="@($"Images/time/{roundTime}.png")" alt="time" />
                     </div>
                 }
 
@@ -199,7 +216,7 @@ else
                 <div style="position: absolute; bottom: 37%; left: 31%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
                     @if (gameState.TableCards != null && gameState.TableCards.Count > 0)
                     {
-                        <img src="@($"images/cardFaces/default/{gameState.TableCards[0].Value}{gameState.TableCards[0].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
+                        <img src="@($"Images/cardFaces/default/{gameState.TableCards[0].Value}{gameState.TableCards[0].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
                     }
                 </div>
 
@@ -207,7 +224,7 @@ else
                 <div style="position: absolute; bottom: 37%; left: 40.5%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
                     @if (gameState.TableCards != null && gameState.TableCards.Count > 1)
                     {
-                        <img src="@($"images/cardFaces/default/{gameState.TableCards[1].Value}{gameState.TableCards[1].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
+                        <img src="@($"Images/cardFaces/default/{gameState.TableCards[1].Value}{gameState.TableCards[1].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
                     }
                 </div>
 
@@ -215,7 +232,7 @@ else
                 <div style="position: absolute; bottom: 37%; left: 50%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
                     @if (gameState.TableCards != null && gameState.TableCards.Count > 2)
                     {
-                        <img src="@($"images/cardFaces/default/{gameState.TableCards[2].Value}{gameState.TableCards[2].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
+                        <img src="@($"Images/cardFaces/default/{gameState.TableCards[2].Value}{gameState.TableCards[2].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
                     }
                 </div>
 
@@ -223,7 +240,7 @@ else
                 <div style="position: absolute; bottom: 37%; left: 59.5%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
                     @if (gameState.TableCards != null && gameState.TableCards.Count > 3)
                     {
-                        <img src="@($"images/cardFaces/default/{gameState.TableCards[3].Value}{gameState.TableCards[3].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
+                        <img src="@($"Images/cardFaces/default/{gameState.TableCards[3].Value}{gameState.TableCards[3].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
                     }
                 </div>
 
@@ -231,7 +248,7 @@ else
                 <div style="position: absolute; bottom: 37%; left: 69%; right: 0; width: 9%; display: flex; justify-content: center; transform: translateX(-50%);">
                     @if (gameState.TableCards != null && gameState.TableCards.Count > 4)
                     {
-                        <img src="@($"images/cardFaces/default/{gameState.TableCards[4].Value}{gameState.TableCards[4].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
+                        <img src="@($"Images/cardFaces/default/{gameState.TableCards[4].Value}{gameState.TableCards[4].Suit}.png")" alt="card1" style="width: 100%; height: auto;" />
                     }
                 </div>
             </div>
@@ -253,21 +270,27 @@ else
                 </div>
             }
 
+            <div class="side-buttons">
+                <div class="side-button">
+                    <img src=@hideButtonImage alt="Hide/Show"
+                        @onpointerdown="() => ClickButton(Button.Hide)">
+                </div>
 
-            <div class="side-button side-button-hide">
-                <img src=@hideButtonImage alt="Hide/Show"
-                    @onpointerdown="() => ClickButton(Button.Hide)">
+                <div class="side-button">
+                    <img src=@lockButtonImage alt="Lock/Unlock"
+                         @onpointerdown="() => ClickButton(Button.Lock)">
+                </div>
+
+                <div class="side-button">
+                    <img src=@codeButtonImage alt="Code" 
+                         @onpointerleave=" ()=> OffButton(Button.Code)"
+                         @onpointerenter="() => OverButton(Button.Code)"
+                         @onpointerdown="() => ClickButton(Button.Code)"
+                         @onpointerup="() => OverButton(Button.Code)">
+                </div>
             </div>
 
-            <div class="side-button side-button-code">
-                <img src=@codeButtonImage alt="Code" 
-                     @onpointerleave=" ()=> OffButton(Button.Code)"
-                     @onpointerenter="() => OverButton(Button.Code)"
-                     @onpointerdown="() => ClickButton(Button.Code)"
-                     @onpointerup="() => OverButton(Button.Code)">
-            </div>
-
-            @if (gameState != null && gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses[currentUserName] == Poker.Game.Table.PlayerStatus.Folded)
+            @if (gameState != null && gameState.Stage == Poker.Game.Table.GameStage.GameOver && gameState.Statuses.TryGetValue(currentUserName, out var status) && status == Poker.Game.Table.PlayerStatus.Folded)
             {
             <div style="display:flex; justify-content:center; gap:1%; margin-top:10px;">
                 <img src=@showButtonImage alt="Show" style="width:8%; height:auto;"
@@ -312,7 +335,7 @@ else
                          @onpointerup="() => OverButton(Button.Minus)">
 
                     <div style="position: relative; width: 8%; display: inline-block;">
-                        <img src="images/buttons/inputField.png" alt="InputField" style="width: 100%; height: auto; display: block;" />
+                        <img src="Images/buttons/inputField.png" alt="InputField" style="width: 100%; height: auto; display: block;" />
 
                         <input class="no-arrows" type="number" @bind="raiseAmount" @bind:event="oninput" @onkeydown="HandleInputKeyDown"
                                style="position: absolute;
@@ -349,8 +372,13 @@ else
     private GameStateDto? gameState;
     private string currentUserName;
     private string whoseTurn = string.Empty;
+    private bool isLocked;
 
     private string[] positions = {"-top-right", "-mid-right", "-bot-right", "-mid", "-bot-left", "-mid-left", "-top-left"};
+
+    private string messageInput = "";
+    private string chat = new string('\n', 11);
+    private ElementReference chatTextArea;
 
     private bool cardsClicked = false;
     private bool hidden = false;
@@ -368,21 +396,22 @@ else
 
     private int plusMinusStep = 0;
 
-    private string dealerImage = "images/dealer/dealer.png";
+    private string dealerImage = "Images/dealer/dealer.png";
 
-    private string startButtonImage = "images/buttons/startOff.png";
-    private string checkCallButtonImage = "images/buttons/checkOff.png";
-    private string raiseButtonImage = "images/buttons/raiseOff.png";
-    private string foldButtonImage = "images/buttons/foldOff.png";
-    private string hideButtonImage = "images/buttons/shown.png";
-    private string codeButtonImage = "images/buttons/codeOff.png";
+    private string startButtonImage = "Images/buttons/startOff.png";
+    private string checkCallButtonImage = "Images/buttons/checkOff.png";
+    private string raiseButtonImage = "Images/buttons/raiseOff.png";
+    private string foldButtonImage = "Images/buttons/foldOff.png";
+    private string hideButtonImage = "Images/buttons/shown.png";
+    private string codeButtonImage = "Images/buttons/codeOff.png";
 
-    private string cancelButtonImage = "images/buttons/cancelOff.png";
-    private string minusButtonImage = "images/buttons/minusOff.png";
-    private string plusButtonImage = "images/buttons/plusOff.png";
-    private string okButtonImage = "images/buttons/okOff.png";
+    private string cancelButtonImage = "Images/buttons/cancelOff.png";
+    private string minusButtonImage = "Images/buttons/minusOff.png";
+    private string plusButtonImage = "Images/buttons/plusOff.png";
+    private string okButtonImage = "Images/buttons/okOff.png";
 
-    private string showButtonImage = "images/buttons/showOff.png";
+    private string showButtonImage = "Images/buttons/showOff.png";
+	private string lockButtonImage = "Images/buttons/unlocked.png";
 
     private System.Timers.Timer? _uiTimer;
     private int turnTime = 5;
@@ -402,7 +431,8 @@ else
         Ok,
         Show,
         Hide,
-        Code
+        Code,
+        Lock
     }
 
     private void OffButton(Button button)
@@ -410,41 +440,41 @@ else
         switch (button)
         {
             case Button.Start:
-                startButtonImage = "images/buttons/startOff.png";
+                startButtonImage = "Images/buttons/startOff.png";
                 break;
             case Button.CheckCall:
-                if (gameState != null && gameState.Statuses.Count() != 0 && gameState.Statuses[currentUserName] == Poker.Game.Table.PlayerStatus.ToCall)
+                if (gameState != null && gameState.Statuses.TryGetValue(currentUserName, out var status) && status == Poker.Game.Table.PlayerStatus.ToCall)
                 {
-                    checkCallButtonImage = "images/buttons/callOff.png";
+                    checkCallButtonImage = "Images/buttons/callOff.png";
                 }
                 else
                 {
-                    checkCallButtonImage = "images/buttons/checkOff.png";
+                    checkCallButtonImage = "Images/buttons/checkOff.png";
                 }
                 break;
             case Button.Raise:
-                raiseButtonImage = "images/buttons/raiseOff.png";
+                raiseButtonImage = "Images/buttons/raiseOff.png";
                 break;
             case Button.Fold:
-                foldButtonImage = "images/buttons/foldOff.png";
+                foldButtonImage = "Images/buttons/foldOff.png";
                 break;
             case Button.Cancel:
-                cancelButtonImage = "images/buttons/cancelOff.png";
+                cancelButtonImage = "Images/buttons/cancelOff.png";
                 break;
             case Button.Minus:
-                minusButtonImage = "images/buttons/minusOff.png";
+                minusButtonImage = "Images/buttons/minusOff.png";
                 break;
             case Button.Plus:
-                plusButtonImage = "images/buttons/plusOff.png";
+                plusButtonImage = "Images/buttons/plusOff.png";
                 break;
             case Button.Ok:
-                okButtonImage = "images/buttons/okOff.png";
+                okButtonImage = "Images/buttons/okOff.png";
                 break;
             case Button.Show:
-                showButtonImage = "images/buttons/showOff.png";
+                showButtonImage = "Images/buttons/showOff.png";
                 break;
             case Button.Code:
-                codeButtonImage = "images/buttons/codeOff.png";
+                codeButtonImage = "Images/buttons/codeOff.png";
 				break;
         }
     }
@@ -454,41 +484,41 @@ else
         switch(button)
         {
             case Button.Start:
-                startButtonImage = "images/buttons/startOn.png";
+                startButtonImage = "Images/buttons/startOn.png";
                 break;
             case Button.CheckCall:
-                if (gameState != null && gameState.Statuses.Count() != 0 && gameState.Statuses[currentUserName] == Poker.Game.Table.PlayerStatus.ToCall)
+                if (gameState != null && gameState.Statuses.TryGetValue(currentUserName, out var status) && status == Poker.Game.Table.PlayerStatus.ToCall)
                 {
-                    checkCallButtonImage = "images/buttons/callOn.png";
+                    checkCallButtonImage = "Images/buttons/callOn.png";
                 }
                 else
                 {
-                    checkCallButtonImage = "images/buttons/checkOn.png";
+                    checkCallButtonImage = "Images/buttons/checkOn.png";
                 }
                 break;
             case Button.Raise:
-                raiseButtonImage = "images/buttons/raiseOn.png";
+                raiseButtonImage = "Images/buttons/raiseOn.png";
                 break;
             case Button.Fold:
-                foldButtonImage = "images/buttons/foldOn.png";
+                foldButtonImage = "Images/buttons/foldOn.png";
                 break;
             case Button.Cancel:
-                cancelButtonImage = "images/buttons/cancelOn.png";
+                cancelButtonImage = "Images/buttons/cancelOn.png";
                 break;
             case Button.Minus:
-                minusButtonImage = "images/buttons/minusOn.png";
+                minusButtonImage = "Images/buttons/minusOn.png";
                 break;
             case Button.Plus:
-                plusButtonImage = "images/buttons/plusOn.png";
+                plusButtonImage = "Images/buttons/plusOn.png";
                 break;
             case Button.Ok:
-                okButtonImage = "images/buttons/okOn.png";
+                okButtonImage = "Images/buttons/okOn.png";
                 break;
             case Button.Show:
-                showButtonImage = "images/buttons/showOn.png";
+                showButtonImage = "Images/buttons/showOn.png";
                 break;
             case Button.Code:
-                codeButtonImage = "images/buttons/codeOn.png";
+                codeButtonImage = "Images/buttons/codeOn.png";
                 break;
         }
     }
@@ -498,22 +528,22 @@ else
         switch (button)
         {
             case Button.Start:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                startButtonImage = "images/buttons/startClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                startButtonImage = "Images/buttons/startClick.png";
                 if (gameState != null && gameState.Stage == Poker.Game.Table.GameStage.NotStarted)
                 {
                     hubConnection?.InvokeAsync("StartGame", JoinCode);
                 }
                 break;
             case Button.CheckCall:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                if (gameState != null && gameState.Statuses.Count() != 0 && gameState.Statuses[currentUserName] == Poker.Game.Table.PlayerStatus.ToCall)
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                if (gameState != null && gameState.Statuses.TryGetValue(currentUserName, out var status) && status == Poker.Game.Table.PlayerStatus.ToCall)
                 {
-                    checkCallButtonImage = "images/buttons/callClick.png";
+                    checkCallButtonImage = "Images/buttons/callClick.png";
                 }
                 else
                 {
-                    checkCallButtonImage = "images/buttons/checkClick.png";
+                    checkCallButtonImage = "Images/buttons/checkClick.png";
                 }
                 if (gameState != null && gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == currentUserName)
                 {
@@ -521,8 +551,8 @@ else
                 }
                 break;
             case Button.Raise:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                raiseButtonImage = "images/buttons/raiseClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                raiseButtonImage = "Images/buttons/raiseClick.png";
                 if(gameState != null && gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == currentUserName)
                 {
                     raiseAmount = gameState.MinRaise;
@@ -532,22 +562,22 @@ else
                 }
                 break;
             case Button.Fold:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                foldButtonImage = "images/buttons/foldClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                foldButtonImage = "Images/buttons/foldClick.png";
                 if (gameState != null && gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == currentUserName)
                 {
                     hubConnection?.InvokeAsync("SendAction", currentUserName, Poker.Game.Table.Decision.Fold, 0);
                 }
                 break;
             case Button.Cancel:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                cancelButtonImage = "images/buttons/cancelClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                cancelButtonImage = "Images/buttons/cancelClick.png";
                 OffButton(Button.Raise);
                 rising = false;
                 break;
             case Button.Minus:
-                JS.InvokeVoidAsync("playAudio", "sounds/coinMinus.mp3");
-                minusButtonImage = "images/buttons/minusClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/coinMinus.mp3");
+                minusButtonImage = "Images/buttons/minusClick.png";
                 if (gameState != null)
                 {
                     if (raiseAmount - plusMinusStep >= gameState.MinRaise)
@@ -561,11 +591,11 @@ else
                 }
                 break;
             case Button.Plus:
-                JS.InvokeVoidAsync("playAudio", "sounds/coinPlus.mp3");
-                plusButtonImage = "images/buttons/plusClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/coinPlus.mp3");
+                plusButtonImage = "Images/buttons/plusClick.png";
                 if (gameState != null)
                 {
-                    var balance = gameState.Players.First(p => p.name == currentUserName).tableBalance;
+                    var balance = gameState.PlayersInGame.First(p => p.name == currentUserName).tableBalance;
 
                     if (raiseAmount + plusMinusStep <= balance)
                     {
@@ -578,11 +608,11 @@ else
                 }
                 break;
             case Button.Ok:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                okButtonImage = "images/buttons/okClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                okButtonImage = "Images/buttons/okClick.png";
                 if (gameState != null && gameState.CurrentPlayer != null && gameState.CurrentPlayer.name == currentUserName)
                 {
-                    var myBalance = gameState.Players.First(p => p.name == currentUserName).tableBalance;
+                    var myBalance = gameState.PlayersInGame.First(p => p.name == currentUserName).tableBalance;
 
                     if (raiseAmount + gameState.ToCall > myBalance)
                         raiseAmount = myBalance;
@@ -595,23 +625,27 @@ else
                 rising = false;
                 break;
             case Button.Show:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                showButtonImage = "images/buttons/showClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                showButtonImage = "Images/buttons/showClick.png";
                 if (gameState != null && gameState.Stage == Poker.Game.Table.GameStage.GameOver)
                 {
                     hubConnection?.InvokeAsync("SendAction", currentUserName, Poker.Game.Table.Decision.Show, 0);
                 }
                 break;
             case Button.Hide:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                hideButtonImage = hidden ? "images/buttons/shown.png" : "images/buttons/hidden.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                hideButtonImage = hidden ? "Images/buttons/shown.png" : "Images/buttons/hidden.png";
                 hidden = !hidden;
                 break;
             case Button.Code:
-                JS.InvokeVoidAsync("playAudio", "sounds/click.mp3");
-                codeButtonImage = "images/buttons/codeClick.png";
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                codeButtonImage = "Images/buttons/codeClick.png";
                 JS.InvokeVoidAsync("copyToClipboard", JoinCode);
                 break;
+            case Button.Lock:
+                JS.InvokeVoidAsync("playAudio", "Sounds/click.mp3");
+                hubConnection?.InvokeAsync("SetLock", currentUserName, !isLocked);
+				break;
         }
     }
 
@@ -621,6 +655,24 @@ else
         {
             ClickButton(Button.Ok);
         }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(messageInput))
+            return;
+
+        await hubConnection.InvokeAsync("SendMessage", currentUserName, messageInput);
+
+        messageInput = "";
     }
 
     protected override async Task OnInitializedAsync()
@@ -659,7 +711,7 @@ else
         var playerTable = GameService.GetTableByPlayer(currentUserName);
 
         if (table == null 
-            || (table.IsFull() && !table.playersInGame.Any(p => p.name == currentUserName)) 
+            || (table.IsFull() && !table.players.Any(p => p.name == currentUserName)) 
             || (playerTable != null && playerTable.joinCode != JoinCode))
         {
             Navigation.NavigateTo($"/");
@@ -691,6 +743,7 @@ else
 
             if (stageChanged && isGameOver)
             {
+                JS.InvokeVoidAsync("playAudio", "Sounds/win.mp3");
                 roundTime = 5;
                 _roundTimer?.Stop();
                 _roundTimer?.Start();
@@ -723,11 +776,11 @@ else
 
                     if (currentUserName == state.CurrentPlayer.name)
                     {
-                        JS.InvokeVoidAsync("playAudio", "sounds/yourTurn.mp3");
+                        JS.InvokeVoidAsync("playAudio", "Sounds/yourTurn.mp3");
                     }
                     else if (whoseTurn != currentUserName)
                     {
-                        JS.InvokeVoidAsync("playAudio", "sounds/nextPlayer.mp3");
+                        JS.InvokeVoidAsync("playAudio", "Sounds/nextPlayer.mp3");
                     }
                 }
                 whoseTurn = state.CurrentPlayer.name;
@@ -738,6 +791,8 @@ else
                 _uiTimer?.Stop();
             }
             gameState = state;
+			isLocked = state.IsLocked;
+			lockButtonImage = isLocked ? "Images/buttons/locked.png" : "Images/buttons/unlocked.png";
             OffButton(Button.Start);
             OffButton(Button.CheckCall);
             OffButton(Button.Raise);
@@ -769,6 +824,18 @@ else
             HandleTip();
         });
 
+        hubConnection.On<string>("Message", (message) =>
+        {
+            chat += "\n" + message;
+
+            InvokeAsync(async () =>
+            {
+                StateHasChanged();
+                await Task.Delay(50);
+                await JS.InvokeVoidAsync("chatFunctions.scrollToBottom", chatTextArea);
+            });
+        });
+
         try
         {
             await hubConnection.StartAsync();
@@ -782,6 +849,26 @@ else
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var assets = await Http.GetFromJsonAsync<List<string>>("api/assets/manifest");
+
+                if (assets != null && assets.Any())
+                {
+                    await JS.InvokeVoidAsync("assetPreloader.preload", assets);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Asset manifest fetch failed: {ex.Message}");
+            }
+        }
+    }
+
     private void Tip()
     {
         hubConnection?.InvokeAsync("SendAction", currentUserName, Poker.Game.Table.Decision.Tip, 0);
@@ -789,15 +876,15 @@ else
 
     private async Task HandleTip()
     {
-        await JS.InvokeVoidAsync("playAudio", "sounds/tip.mp3");
+        await JS.InvokeVoidAsync("playAudio", "Sounds/tip.mp3");
 
-        dealerImage = "images/dealer/dealerOk.png";
+        dealerImage = "Images/dealer/dealerOk.png";
 
         await InvokeAsync(StateHasChanged);
 
         await Task.Delay(500);
 
-        dealerImage = "images/dealer/dealer.png";
+        dealerImage = "Images/dealer/dealer.png";
 
         await InvokeAsync(StateHasChanged);
     }
