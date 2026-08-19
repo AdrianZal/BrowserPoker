@@ -26,10 +26,11 @@
 
         public int Evaluate7(List<Card> hand)
         {
+            int flushScore = -1;
             int flushIndex = GetIndexFlush(hand);
             if (flushIndex != -1)
             {
-                return _flushLUT[flushIndex];
+                flushScore = _flushLUT[flushIndex];
             }
 
             Span<int> ranks = stackalloc int[7];
@@ -40,7 +41,7 @@
 
             ranks.Sort();
 
-            return _nonFlushLUT[GetIndexNonFlush(ranks)];
+            return flushScore > _nonFlushLUT[GetIndexNonFlush(ranks)]? flushScore : _nonFlushLUT[GetIndexNonFlush(ranks)];
         }
 
         private int GetIndexNonFlush(ReadOnlySpan<int> ranks)
